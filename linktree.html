@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Kay | Links Oficiais</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+theme:{
+extend:{
+colors:{
+dark:"#050505",
+card:"#111111",
+gold:"#C9A962",
+gold2:"#9E7E39",
+line:"#1f1f1f"
+},
+fontFamily:{
+sans:["Inter","sans-serif"]
+}
+}
+}
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body{
+background:
+radial-gradient(circle at top right, rgba(201,169,98,.08), transparent 25%),
+radial-gradient(circle at bottom left, rgba(255,255,255,.03), transparent 20%),
+#050505;
+}
+.glass{
+background:rgba(255,255,255,.03);
+backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,.06);
+}
+.btn{
+transition:.35s ease;
+}
+.btn:hover{
+transform:translateY(-3px) scale(1.01);
+}
+.fade-up{
+animation:fadeUp .8s ease forwards;
+opacity:0;
+transform:translateY(20px);
+}
+@keyframes fadeUp{
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+</style>
+</head>
+
+<body class="min-h-screen text-white font-sans px-6 py-10 flex items-center justify-center">
+
+<div class="w-full max-w-md">
+
+<!-- Top -->
+<div class="text-center mb-8 fade-up">
+
+<div class="relative mx-auto w-36 h-36 mb-6">
+<div class="absolute inset-0 rounded-full bg-gradient-to-r from-gold to-white/20 blur-xl opacity-40"></div>
+
+<div class="relative p-[3px] rounded-full bg-gradient-to-r from-gold via-white/20 to-gold shadow-2xl">
+<img src="imgs/bruno.jpg"
+alt="Bruno Kay"
+class="w-full h-full rounded-full object-cover">
+</div>
+</div>
+
+<h1 class="text-4xl font-extrabold tracking-tight">
+Bruno <span class="text-gold">Kay</span>
+</h1>
+
+<p class="text-gray-400 mt-3 leading-relaxed text-sm max-w-sm mx-auto">
+Desenvolvedor de sistemas, sites premium, automações e soluções digitais para empresas.
+</p>
+
+<div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-xs text-gray-300">
+<i class="fa-solid fa-circle text-green-400 text-[10px]"></i>
+Disponível para novos projetos
+</div>
+
+</div>
+
+<!-- Links -->
+<div class="space-y-4">
+
+<a href="https://wa.me/5543988506395"
+target="_blank"
+class="btn fade-up flex items-center justify-between px-5 py-4 rounded-2xl bg-gradient-to-r from-green-500 to-green-400 text-black font-semibold shadow-lg"
+style="animation-delay:.1s">
+<span class="flex items-center gap-3">
+<i class="fab fa-whatsapp text-xl"></i>
+WhatsApp Comercial
+</span>
+<i class="fa-solid fa-arrow-up-right-from-square"></i>
+</a>
+
+<a href="https://brunoxzr.github.io/portfolio/index.html"
+target="_blank"
+class="btn fade-up flex items-center justify-between px-5 py-4 rounded-2xl bg-gradient-to-r from-gold to-yellow-500 text-black font-semibold shadow-lg"
+style="animation-delay:.15s">
+<span class="flex items-center gap-3">
+<i class="fa-solid fa-globe"></i>
+Portfólio Profissional
+</span>
+<i class="fa-solid fa-arrow-up-right-from-square"></i>
+</a>
+
+<a href="https://www.linkedin.com/in/bruno-yudi-kay-383201317/"
+target="_blank"
+class="btn fade-up glass flex items-center justify-between px-5 py-4 rounded-2xl"
+style="animation-delay:.2s">
+<span class="flex items-center gap-3">
+<i class="fab fa-linkedin text-blue-400 text-xl"></i>
+LinkedIn
+</span>
+<i class="fa-solid fa-chevron-right text-gray-500"></i>
+</a>
+
+<a href="https://github.com/brunoxzr"
+target="_blank"
+class="btn fade-up glass flex items-center justify-between px-5 py-4 rounded-2xl"
+style="animation-delay:.25s">
+<span class="flex items-center gap-3">
+<i class="fab fa-github text-xl"></i>
+GitHub
+</span>
+<i class="fa-solid fa-chevron-right text-gray-500"></i>
+</a>
+
+<a href="https://instagram.com/brunoyudikay"
+target="_blank"
+class="btn fade-up glass flex items-center justify-between px-5 py-4 rounded-2xl"
+style="animation-delay:.3s">
+<span class="flex items-center gap-3">
+<i class="fab fa-instagram text-pink-400 text-xl"></i>
+Instagram Pessoal
+</span>
+<i class="fa-solid fa-chevron-right text-gray-500"></i>
+</a>
+
+<a href="https://instagram.com/kay.techsolutions"
+target="_blank"
+class="btn fade-up glass flex items-center justify-between px-5 py-4 rounded-2xl"
+style="animation-delay:.35s">
+<span class="flex items-center gap-3">
+<i class="fab fa-instagram text-pink-400 text-xl"></i>
+KayTech Solutions
+</span>
+<i class="fa-solid fa-chevron-right text-gray-500"></i>
+</a>
+
+</div>
+
+<!-- Footer -->
+<div class="mt-10 text-center fade-up" style="animation-delay:.45s">
+<p class="text-xs text-gray-500">
+© 2026 Bruno Kay • Todos os direitos reservados
+</p>
+</div>
+
+</div>
+
+</body>
+</html>

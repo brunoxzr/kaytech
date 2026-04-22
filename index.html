@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KayTech Solutions - Tecnologia que gera resultado real. Desenvolvimento de sistemas, sites institucionais, automações inteligentes e soluções digitais sob medida.">
+    <meta name="keywords" content="desenvolvimento web, sistemas, automação, tecnologia, software, KayTech">
+    <title>KayTech Solutions | Tecnologia que gera resultado real</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0A0A0A',
+                        darker: '#050505',
+                        graphite: '#1a1a1a',
+                        elegant: '#2a2a2a',
+                        gold: '#C9A962',
+                        'gold-dark': '#A68B4B',
+                        'blue-premium': '#1E3A5F'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #0A0A0A;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #0A0A0A;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #1a1a1a;
+            border-top-color: #C9A962;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Grid Background */
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(201, 169, 98, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201, 169, 98, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        /* Gradient Glow */
+        .glow-gold {
+            box-shadow: 0 0 60px rgba(201, 169, 98, 0.15);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 40px rgba(201, 169, 98, 0.3);
+        }
+        
+        /* Glass Effect */
+        .glass {
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card {
+            background: rgba(26, 26, 26, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+        }
+        
+        /* Navbar */
+        .navbar {
+            transition: all 0.4s ease;
+        }
+        
+        .navbar.scrolled {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #C9A962 0%, #A68B4B 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(201, 169, 98, 0.3);
+        }
+        
+        .btn-secondary {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #C9A962;
+            color: #C9A962;
+        }
+        
+        /* Cards */
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            border-color: rgba(201, 169, 98, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Floating Elements */
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .float-delayed {
+            animation: float 6s ease-in-out infinite 2s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Pulse */
+        .pulse-gold {
+            animation: pulseGold 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseGold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 98, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(201, 169, 98, 0); }
+        }
+        
+        /* Line Animation */
+        .line-animated {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .line-animated::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #C9A962, transparent);
+            transform: translateX(-100%);
+            animation: lineMove 3s ease-in-out infinite;
+        }
+        
+        @keyframes lineMove {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* Particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(201, 169, 98, 0.5);
+            border-radius: 50%;
+            animation: particleFloat 15s linear infinite;
+        }
+        
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Counter */
+        .counter {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0A0A0A;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C9A962;
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        /* Hero Mockup */
+        .mockup-container {
+            perspective: 1000px;
+        }
+        
+        .mockup-card {
+            transform: rotateY(-5deg) rotateX(5deg);
+            transition: transform 0.5s ease;
+        }
+        
+        .mockup-container:hover .mockup-card {
+            transform: rotateY(0deg) rotateX(0deg);
+        }
+        
+        /* Gradient Border */
+        .gradient-border {
+            position: relative;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(201, 169, 98, 0.5), transparent, rgba(201, 169, 98, 0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        .hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.04);
+            filter: blur(4px) brightness(0.22);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.78) 100%),
+                radial-gradient(circle at top left, rgba(201, 169, 98, 0.08), transparent 35%),
+                rgba(0, 0, 0, 0.42);
+        }
+
+        .brand-logo {
+            width: auto;
+            display: block;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white antialiased">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+    </div>
+    
+    <!-- Particles Background -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0" id="particles"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar fixed top-0 left-0 right-0 z-50 py-4 px-6 lg:px-12" id="navbar">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <img src="./logo.png" alt="KayTech Solutions" class="brand-logo h-12 sm:h-14">
+            </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center gap-10">
+                <a href="#inicio" class="text-sm text-gray-400 hover:text-white transition-colors">Início</a>
+                <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="text-sm text-gray-400 hover:text-white transition-colors">Projetos</a>
+                <a href="#servicos" class="text-sm text-gray-400 hover:text-white transition-colors">Serviços</a>
+                <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="text-sm text-gray-400 hover:text-white transition-colors">Sobre</a>
+                <a href="#contato" class="text-sm text-gray-400 hover:text-white transition-colors">Contato</a>
+                
+            </div>
+            
+            <!-- CTA Button -->
+            <div class="hidden lg:block">
+                <a href="#contato" class="btn-primary px-6 py-3 rounded-full text-sm font-medium text-dark inline-flex items-center gap-2">
+                    Solicitar Projeto
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button class="lg:hidden text-white" id="mobileMenuBtn">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu fixed inset-y-0 right-0 w-80 bg-darker z-50 p-8 lg:hidden" id="mobileMenu">
+        <div class="flex justify-end mb-10">
+            <button id="closeMobileMenu">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <div class="flex flex-col gap-6">
+            <a href="#inicio" class="text-xl text-gray-300 hover:text-gold transition-colors">Início</a>
+            <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="text-xl text-gray-300 hover:text-gold transition-colors">Projetos</a>
+            <a href="#servicos" class="text-xl text-gray-300 hover:text-gold transition-colors">Serviços</a>
+            <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="text-xl text-gray-300 hover:text-gold transition-colors">Sobre</a>
+            <a href="#contato" class="text-xl text-gray-300 hover:text-gold transition-colors">Contato</a>
+            <a href="#contato" class="btn-primary px-6 py-3 rounded-full text-sm font-medium text-dark text-center mt-4">
+                Solicitar Projeto
+            </a>
+        </div>
+    </div>
+    
+    <!-- Hero Section -->
+    <section id="inicio" class="relative min-h-screen flex items-center pt-20 overflow-hidden grid-bg">
+        <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+            <source src="./class.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+
+        <!-- Gradient Orbs -->
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-gold/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-premium/10 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-32 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left Content -->
+                <div class="fade-up">
+                    
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6">
+                        Tecnologia que gera
+                        <span class="text-gold glow-text"> resultado real.</span>
+                    </h1>
+                    
+                    <p class="text-lg text-gray-400 leading-relaxed mb-10 max-w-xl">
+                        Desenvolvimento de sistemas, sites institucionais, automações inteligentes e soluções digitais sob medida para empresas, órgãos públicos e negócios modernos.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#contato" class="btn-primary px-8 py-4 rounded-full font-medium text-dark inline-flex items-center gap-3">
+                            Solicitar Projeto
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </a>
+                        <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="btn-secondary px-8 py-4 rounded-full font-medium inline-flex items-center gap-3">
+                            Ver Portfólio
+                            <i data-lucide="folder-open" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Right Content - Mockups -->
+                <div class="fade-up mockup-container hidden lg:block" style="transition-delay: 0.2s;">
+                    <div class="relative">
+                        <!-- Main Dashboard -->
+                        <div class="mockup-card glass-card rounded-2xl p-4 glow-gold float">
+                            <div class="bg-graphite rounded-xl p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Dashboard Administrativo</p>
+                                        <p class="text-2xl font-bold">R$ 847.520</p>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+                                        <i data-lucide="trending-up" class="w-6 h-6 text-gold"></i>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-4 gap-3">
+                                    <div class="h-20 bg-gold/30 rounded-lg"></div>
+                                    <div class="h-16 bg-gold/20 rounded-lg mt-4"></div>
+                                    <div class="h-24 bg-gold/40 rounded-lg"></div>
+                                    <div class="h-14 bg-gold/25 rounded-lg mt-6"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating Card 1 -->
+                        <div class="absolute -bottom-10 -left-10 glass-card rounded-xl p-4 float-delayed gradient-border">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Sistema</p>
+                                    <p class="text-sm font-semibold">Online 100%</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating Card 2 -->
+                        <div class="absolute -top-6 -right-6 glass-card rounded-xl p-4 float gradient-border">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                                    <i data-lucide="users" class="w-5 h-5 text-gold"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Usuários</p>
+                                    <p class="text-sm font-semibold">+300 ativos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500">
+            <span class="text-xs uppercase tracking-widest">Scroll</span>
+            <div class="w-6 h-10 border border-gray-700 rounded-full flex items-start justify-center p-2">
+                <div class="w-1.5 h-3 bg-gold rounded-full animate-bounce"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Social Proof Section -->
+    <section class="py-20 lg:py-32 relative border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+                <div class="fade-up glass-card rounded-2xl p-8 text-center card-hover">
+                    <div class="text-4xl lg:text-5xl font-bold text-gold mb-2 counter" data-target="50">0</div>
+                    <div class="text-sm text-gray-400">Projetos Entregues</div>
+                </div>
+                <div class="fade-up glass-card rounded-2xl p-8 text-center card-hover" style="transition-delay: 0.1s;">
+                    <div class="text-4xl lg:text-5xl font-bold text-gold mb-2 counter" data-target="12">0</div>
+                    <div class="text-sm text-gray-400">Sistemas em Produção</div>
+                </div>
+                <div class="fade-up glass-card rounded-2xl p-8 text-center card-hover" style="transition-delay: 0.2s;">
+                    <div class="text-4xl lg:text-5xl font-bold text-gold mb-2 counter" data-target="35">0</div>
+                    <div class="text-sm text-gray-400">Clientes Atendidos</div>
+                </div>
+                <div class="fade-up glass-card rounded-2xl p-8 text-center card-hover" style="transition-delay: 0.3s;">
+                    <div class="text-4xl lg:text-5xl font-bold text-white mb-2">99.9<span class="text-gold">%</span></div>
+                    <div class="text-sm text-gray-400">Alta Performance</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Cases Section -->
+    <section id="projetos" class="py-20 lg:py-32 relative">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center mb-16 fade-up">
+                <span class="text-gold text-sm font-medium uppercase tracking-widest">Portfólio</span>
+                <h2 class="text-3xl lg:text-5xl font-bold mt-4 mb-6">
+                    Projetos aplicados no <span class="text-gold">mundo real</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    Cada projeto é desenvolvido com foco em resultado, performance e experiência do usuário.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+<!-- CASE 1 -->
+<div class="fade-up glass-card rounded-3xl overflow-hidden card-hover group border border-white/5 hover:border-gold/30 transition-all duration-500">
+
+    <div class="h-72 relative overflow-hidden">
+
+        <img src="imgs/dashboardassahi.png"
+             alt="Assahi System Dashboard"
+             class="w-full h-full object-cover scale-105 group-hover:scale-110 transition duration-700">
+
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+
+        <div class="absolute top-4 left-4 px-4 py-2 rounded-full bg-gold/20 backdrop-blur-md text-gold text-xs font-semibold tracking-widest uppercase border border-gold/20">
+            IA • Turismo Inteligente
+        </div>
+
+        <div class="absolute bottom-5 right-5 w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+            <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+        </div>
+
+    </div>
+
+    <div class="p-8">
+
+        <h3 class="text-2xl font-bold mb-3 text-white">Espaço Assahi</h3>
+
+        <p class="text-gray-400 leading-relaxed mb-6">
+            Plataforma oficial com monitoramento inteligente de fluxo de pessoas,
+            dashboards administrativos e inovação aplicada ao turismo local.
+        </p>
+
+        <div class="flex flex-wrap gap-2 mb-8">
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">Python</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">YOLO</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">Laravel</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">API</span>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+
+            <a href="https://espacoassahi.com.br"
+               target="_blank"
+               class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gold text-black font-semibold hover:opacity-90 transition">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+                Acessar Site
+            </a>
+
+            <a href="https://www.linkedin.com/feed/update/urn:li:activity:7436480307286953985/"
+               target="_blank"
+               class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-medium transition">
+                <i data-lucide="linkedin" class="w-4 h-4"></i>
+                LinkedIn
+            </a>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<!-- CASE 2 -->
+<div class="fade-up glass-card rounded-3xl overflow-hidden card-hover group border border-white/5 hover:border-blue-400/30 transition-all duration-500"
+     style="transition-delay:0.1s;">
+
+    <div class="h-72 relative overflow-hidden">
+
+        <img src="imgs/ceepassai.png"
+             alt="CEEP App"
+             class="w-full h-full object-cover scale-105 group-hover:scale-110 transition duration-700">
+
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent"></div>
+
+        <div class="absolute top-4 left-4 px-4 py-2 rounded-full bg-blue-500/20 backdrop-blur-md text-blue-300 text-xs font-semibold tracking-widest uppercase border border-blue-400/20">
+            Plataforma Educacional
+        </div>
+
+        <div class="absolute bottom-5 right-5 w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+            <i data-lucide="layout-dashboard" class="w-6 h-6 text-white"></i>
+        </div>
+
+    </div>
+
+    <div class="p-8">
+
+        <h3 class="text-2xl font-bold mb-3 text-white">CEEP App</h3>
+
+        <p class="text-gray-400 leading-relaxed mb-6">
+            Sistema institucional moderno voltado ao ambiente escolar,
+            gestão interna, comunicação e digitalização de processos.
+        </p>
+
+        <div class="flex flex-wrap gap-2 mb-8">
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">Laravel</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">PostgreSQL</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">JavaScript</span>
+            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-300">Tailwind</span>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+
+            <a href="https://ceepassai.com.br"
+               target="_blank"
+               class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium transition">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+                Acessar Site
+            </a>
+
+            <button class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition">
+                <i data-lucide="school" class="w-4 h-4"></i>
+                Projeto Real
+            </button>
+
+        </div>
+
+    </div>
+</div>
+                <!-- Case 3 -->
+                <div class="fade-up glass-card rounded-3xl overflow-hidden card-hover group" style="transition-delay: 0.2s;">
+                    <div class="h-64 bg-gradient-to-br from-emerald-500/20 to-graphite relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i data-lucide="globe" class="w-20 h-20 text-emerald-400/40 group-hover:scale-110 transition-transform duration-500"></i>
+                        </div>
+                        <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                            Institucional
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-2xl font-bold mb-3">Sites Institucionais Premium</h3>
+                        <p class="text-gray-400 mb-6">
+                            Prefeituras, empresas e marcas sólidas com presença digital de alto padrão e credibilidade.
+                        </p>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">Next.js</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">Tailwind</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">CMS</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Case 4 -->
+                <div class="fade-up glass-card rounded-3xl overflow-hidden card-hover group" style="transition-delay: 0.3s;">
+                    <div class="h-64 bg-gradient-to-br from-purple-500/20 to-graphite relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i data-lucide="bot" class="w-20 h-20 text-purple-400/40 group-hover:scale-110 transition-transform duration-500"></i>
+                        </div>
+                        <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
+                            Automação
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-2xl font-bold mb-3">Automação Inteligente</h3>
+                        <p class="text-gray-400 mb-6">
+                            Bots, integrações e fluxos automáticos que reduzem custo operacional e aumentam produtividade.
+                        </p>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">N8N</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">APIs</span>
+                            <span class="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400">Webhooks</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Services Section -->
+    <section id="servicos" class="py-20 lg:py-32 relative border-t border-white/5">
+        <div class="absolute inset-0 grid-bg opacity-50"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+            <div class="text-center mb-16 fade-up">
+                <span class="text-gold text-sm font-medium uppercase tracking-widest">Serviços</span>
+                <h2 class="text-3xl lg:text-5xl font-bold mt-4 mb-6">
+                    Soluções completas para seu <span class="text-gold">negócio</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    Oferecemos um ecossistema completo de soluções digitais para impulsionar sua empresa.
+                </p>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Service Cards -->
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="code-2" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Sistemas Web Completos</h3>
+                    <p class="text-sm text-gray-400">Plataformas robustas e escaláveis sob medida.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.05s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="building-2" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Sites Institucionais</h3>
+                    <p class="text-sm text-gray-400">Presença digital profissional e moderna.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.1s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="rocket" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Landing Pages</h3>
+                    <p class="text-sm text-gray-400">Páginas de alta conversão e performance.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.15s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="contact" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">CRM Personalizado</h3>
+                    <p class="text-sm text-gray-400">Gestão de clientes sob medida.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.2s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="bar-chart-3" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Dashboards</h3>
+                    <p class="text-sm text-gray-400">Painéis inteligentes e analytics.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.25s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="workflow" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Automação de Processos</h3>
+                    <p class="text-sm text-gray-400">Fluxos automáticos que economizam tempo.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.3s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="palette" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Artes Digitais</h3>
+                    <p class="text-sm text-gray-400">Design visual de alto impacto.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.35s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="share-2" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Posts para Redes</h3>
+                    <p class="text-sm text-gray-400">Conteúdo visual para social media.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.4s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="briefcase" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Portfólios Profissionais</h3>
+                    <p class="text-sm text-gray-400">Vitrine digital para seu trabalho.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.45s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="pen-tool" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Identidade Visual</h3>
+                    <p class="text-sm text-gray-400">Marca forte e memorável.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.5s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="plug" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Integrações API</h3>
+                    <p class="text-sm text-gray-400">Conexões entre sistemas e plataformas.</p>
+                </div>
+                
+                <div class="fade-up glass-card rounded-2xl p-6 card-hover group" style="transition-delay: 0.55s;">
+                    <div class="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-5 group-hover:bg-gold/20 transition-colors">
+                        <i data-lucide="lightbulb" class="w-7 h-7 text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Consultoria Tech</h3>
+                    <p class="text-sm text-gray-400">Estratégia digital para seu negócio.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Why Choose Us Section -->
+    <section class="py-20 lg:py-32 relative border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="fade-up">
+                    <span class="text-gold text-sm font-medium uppercase tracking-widest">Diferenciais</span>
+                    <h2 class="text-3xl lg:text-5xl font-bold mt-4 mb-6">
+                        Por que escolher a <span class="text-gold">KayTech?</span>
+                    </h2>
+                    <p class="text-gray-400 mb-10">
+                        Não entregamos apenas código. Entregamos soluções que geram resultado real para o seu negócio.
+                    </p>
+                    
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="message-circle" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Atendimento Direto</h4>
+                                <p class="text-sm text-gray-400">Comunicação estratégica e sem intermediários.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="settings" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Soluções Sob Medida</h4>
+                                <p class="text-sm text-gray-400">Cada projeto é único e personalizado.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="sparkles" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Visual Premium</h4>
+                                <p class="text-sm text-gray-400">Design de alto padrão e impactante.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="zap" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Alta Performance</h4>
+                                <p class="text-sm text-gray-400">Sistemas rápidos e otimizados.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="cpu" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Tecnologia Moderna</h4>
+                                <p class="text-sm text-gray-400">Stack atualizada e escalável.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="target" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Foco em Resultado</h4>
+                                <p class="text-sm text-gray-400">Tecnologia que gera retorno real.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="award" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Entrega Profissional</h4>
+                                <p class="text-sm text-gray-400">Qualidade e pontualidade garantidas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="headphones" class="w-5 h-5 text-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Suporte Próximo</h4>
+                                <p class="text-sm text-gray-400">Acompanhamento dedicado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visual Element -->
+                <div class="fade-up hidden lg:block" style="transition-delay: 0.2s;">
+                    <div class="relative">
+                        <div class="w-full h-96 rounded-3xl bg-gradient-to-br from-graphite to-elegant overflow-hidden gradient-border">
+                            <div class="absolute inset-0 grid-bg"></div>
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center glow-gold">
+                                    <span class="text-5xl font-bold text-dark">K</span>
+                                </div>
+                            </div>
+                            <!-- Floating Tech Icons -->
+                            <div class="absolute top-10 left-10 w-12 h-12 rounded-xl glass flex items-center justify-center float">
+                                <i data-lucide="code" class="w-6 h-6 text-gold"></i>
+                            </div>
+                            <div class="absolute bottom-10 right-10 w-12 h-12 rounded-xl glass flex items-center justify-center float-delayed">
+                                <i data-lucide="database" class="w-6 h-6 text-gold"></i>
+                            </div>
+                            <div class="absolute top-10 right-20 w-12 h-12 rounded-xl glass flex items-center justify-center float">
+                                <i data-lucide="cloud" class="w-6 h-6 text-gold"></i>
+                            </div>
+                            <div class="absolute bottom-20 left-20 w-12 h-12 rounded-xl glass flex items-center justify-center float-delayed">
+                                <i data-lucide="shield" class="w-6 h-6 text-gold"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+<!-- About Section -->
+<section id="sobre" class="py-20 lg:py-32 relative border-t border-white/5 overflow-hidden">
+    <div class="absolute inset-0 grid-bg opacity-30"></div>
+
+    <!-- Glow decorativo -->
+    <div class="absolute top-20 left-10 w-72 h-72 bg-gold/10 blur-3xl rounded-full"></div>
+    <div class="absolute bottom-10 right-10 w-72 h-72 bg-blue-500/10 blur-3xl rounded-full"></div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+            <!-- FOTO / VISUAL -->
+            <div class="fade-up order-2 lg:order-1">
+                <div class="relative max-w-[520px] mx-auto lg:mx-0">
+
+                    <!-- Anel externo -->
+                    <div class="absolute inset-0 rounded-full border border-white/10 animate-spin-slow"></div>
+
+                    <!-- Glow -->
+                    <div class="absolute -inset-8 bg-gradient-to-r from-gold/10 via-white/5 to-blue-500/10 blur-3xl rounded-full"></div>
+<!-- FOTO PREMIUM IMPACTANTE -->
+<div class="relative w-full min-h-[520px] flex items-center justify-center py-10">
+
+    <!-- Glow externo -->
+    <div class="absolute w-80 h-80 bg-gold/20 blur-[90px] rounded-full animate-pulse"></div>
+
+    <!-- Orbital Ring -->
+    <div class="absolute w-[360px] h-[360px] rounded-full border border-white/10 animate-spin-slow"></div>
+    <div class="absolute w-[420px] h-[420px] rounded-full border border-gold/10"></div>
+
+    <!-- Cards flutuantes -->
+    <div class="absolute left-4 top-20 glass-card px-4 py-3 rounded-2xl shadow-xl hidden lg:flex items-center gap-2">
+        <i data-lucide="code-2" class="w-4 h-4 text-gold"></i>
+        <span class="text-sm text-white">Developer</span>
+    </div>
+
+    <div class="absolute right-8 top-28 glass-card px-4 py-3 rounded-2xl shadow-xl hidden lg:flex items-center gap-2">
+        <i data-lucide="briefcase" class="w-4 h-4 text-gold"></i>
+        <span class="text-sm text-white">Founder</span>
+    </div>
+
+    <!-- Container principal -->
+    <div class="relative w-[320px] h-[320px] lg:w-[380px] lg:h-[380px] rounded-full p-[4px] bg-gradient-to-r from-gold via-white/30 to-gold shadow-[0_0_60px_rgba(212,175,55,0.25)]">
+
+        <!-- Foto -->
+        <div class="w-full h-full rounded-full overflow-hidden bg-zinc-900 relative">
+
+            <img src="imgs/bruno.jpg"
+                 alt="Bruno Kay"
+                 class="w-full h-full object-cover object-[center_18%] scale-[1.03] hover:scale-[1.08] transition duration-700 ease-out">
+
+            <!-- brilho -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-white/10"></div>
+
+            <!-- shimmer -->
+            <div class="absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+
+        </div>
+    </div>
+
+    <!-- Nome -->
+    <div class="absolute left-1/2 -translate-x-1/2 bottom-6 glass-card px-6 py-3 rounded-2xl shadow-xl border border-white/10">
+        <p class="text-white font-semibold text-sm">Bruno Kay</p>
+        <p class="text-gray-400 text-xs">KayTech Solutions</p>
+    </div>
+
+</div>
+
+                </div>
+            </div>
+
+            <!-- CONTEÚDO -->
+            <div class="fade-up order-1 lg:order-2" style="transition-delay: 0.2s;">
+
+                <span class="text-gold text-sm font-medium uppercase tracking-widest">
+                    Quem Sou Eu
+                </span>
+
+                <h2 class="text-3xl lg:text-5xl font-bold mt-4 mb-6 leading-tight">
+                    Tecnologia com <span class="text-gold">execução real</span>
+                </h2>
+
+                <p class="text-gray-400 text-lg leading-relaxed mb-6">
+                    Meu nome é <span class="text-white font-semibold">Bruno Kay</span>, fundador da
+                    <span class="text-white font-semibold">KayTech Solutions</span>.
+                    Atuo no desenvolvimento de soluções digitais modernas,
+                    unindo design estratégico, engenharia de software e visão de negócio.
+                </p>
+
+                <p class="text-gray-400 leading-relaxed mb-8">
+                    Desenvolvo sistemas completos, sites institucionais, CRM personalizados,
+                    automações inteligentes, dashboards administrativos, posts profissionais
+                    e projetos que resolvem problemas reais para empresas e órgãos públicos.
+                </p>
+
+                <!-- Skills -->
+                <div class="grid sm:grid-cols-2 gap-4 mb-8">
+
+                    <div class="glass-card rounded-2xl p-4 border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5 text-gold"></i>
+                            <span class="text-sm text-white font-medium">Sistemas Premium</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-4 border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="globe" class="w-5 h-5 text-gold"></i>
+                            <span class="text-sm text-white font-medium">Sites Institucionais</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-4 border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="bot" class="w-5 h-5 text-gold"></i>
+                            <span class="text-sm text-white font-medium">Automações</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-4 border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="palette" class="w-5 h-5 text-gold"></i>
+                            <span class="text-sm text-white font-medium">Design & Posts</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Infos -->
+                <div class="flex flex-wrap gap-4">
+
+                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-gold"></i>
+                        Brasil
+                    </div>
+
+                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                        <i data-lucide="globe" class="w-4 h-4 text-gold"></i>
+                        Atendimento Nacional
+                    </div>
+
+                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                        <i data-lucide="clock" class="w-4 h-4 text-gold"></i>
+                        Resposta em 24h
+                    </div>
+
+                </div>
+
+                <div class="flex flex-wrap gap-4 mt-8">
+                    <a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="btn-secondary px-8 py-4 rounded-full font-medium inline-flex items-center gap-3">
+                        Ver Meu Portfólio
+                        <i data-lucide="folder-open" class="w-5 h-5"></i>
+                    </a>
+                    <a href="https://wa.me/5543988506395" target="_blank" rel="noopener noreferrer" class="btn-primary px-8 py-4 rounded-full font-medium text-dark inline-flex items-center gap-3">
+                        Falar Comigo
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+    <!-- CTA Section -->
+    <section id="contato" class="py-20 lg:py-32 relative overflow-hidden">
+        <!-- Background Effects -->
+        <div class="absolute inset-0 bg-gradient-to-b from-dark via-graphite to-dark"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"></div>
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gold/5 rounded-full blur-3xl"></div>
+        
+        <div class="max-w-4xl mx-auto px-6 lg:px-12 text-center relative z-10">
+            <div class="fade-up">
+                <span class="text-gold text-sm font-medium uppercase tracking-widest">Vamos Conversar</span>
+                <h2 class="text-3xl lg:text-5xl xl:text-6xl font-bold mt-4 mb-6">
+                    Sua empresa merece<br>
+                    <span class="text-gold glow-text">tecnologia de verdade.</span>
+                </h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-10">
+                    Pronto para dar o próximo passo? Entre em contato e vamos construir algo extraordinário juntos.
+                </p>
+                
+                <a href="https://wa.me/5543988506395" target="_blank" class="btn-primary px-10 py-5 rounded-full text-lg font-medium text-dark inline-flex items-center gap-3 mx-auto">
+                    Solicitar Orçamento
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                
+                <p class="text-sm text-gray-500 mt-6">
+                    Resposta garantida em até 24 horas
+                </p>
+            </div>
+        </div>
+    </section>
+<!-- Footer Premium (SVG inline) -->
+<footer class="relative pt-24 pb-10 border-t border-white/5 overflow-hidden">
+
+  <!-- FX -->
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent"></div>
+  <div class="absolute top-0 left-1/4 w-80 h-80 bg-gold/10 blur-3xl rounded-full"></div>
+  <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-500/10 blur-3xl rounded-full"></div>
+
+  <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+
+    <div class="grid lg:grid-cols-4 gap-14 mb-16">
+
+      <!-- Brand -->
+      <div class="lg:col-span-2">
+
+        <a href="#inicio" class="flex items-center gap-4 mb-6 group">
+          <img src="./logo.png"
+               alt="KayTech Solutions"
+               class="h-14 transition duration-300 group-hover:scale-105">
+        </a>
+
+        <h3 class="text-2xl font-bold mb-4">
+          Tecnologia que gera <span class="text-gold">resultado real.</span>
+        </h3>
+
+        <p class="text-gray-400 max-w-xl leading-relaxed mb-8">
+          Soluções digitais premium para empresas, instituições e marcas
+          que desejam crescer com tecnologia séria, design refinado e alta performance.
+        </p>
+
+        <!-- Social -->
+        <div class="flex flex-wrap gap-3">
+
+          <!-- LinkedIn -->
+          <a href="https://www.linkedin.com/in/bruno-yudi-kay-383201317/"
+             target="_blank"
+             class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-[#0A66C2] hover:bg-white/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4.98 3.5C4.98 4.88 3.86 6 2.48 6S0 4.88 0 3.5 1.12 1 2.48 1s2.5 1.12 2.5 2.5zM.5 8h4V24h-4V8zm7 0h3.8v2.2h.1c.53-1 1.82-2.2 3.75-2.2C19.5 8 24 10.25 24 16.3V24h-4v-6.7c0-3.2-.06-7.3-4.45-7.3-4.46 0-5.14 3.48-5.14 7.08V24h-4V8z"/>
+            </svg>
+          </a>
+
+          <!-- Instagram -->
+          <a href="https://www.instagram.com/kay.techsolutions/"
+             target="_blank"
+             class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-pink-400 hover:bg-white/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5zm5.25-2.12a1.13 1.13 0 1 1 0 2.25 1.13 1.13 0 0 1 0-2.25z"/>
+            </svg>
+          </a>
+
+          <!-- GitHub -->
+          <a href="https://github.com/brunoxzr"
+             target="_blank"
+             class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.3c-3.3.7-4-1.4-4-1.4-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8 1.7 2.9 2.2.1-.7.4-1.2.7-1.5-2.7-.3-5.5-1.3-5.5-6A4.7 4.7 0 0 1 5.7 8c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17 4.6 18 5 18 5c.6 1.6.2 2.8.1 3.1a4.7 4.7 0 0 1 1.3 3.2c0 4.7-2.8 5.7-5.5 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/>
+            </svg>
+          </a>
+
+          <!-- Mail -->
+          <a href="mailto:bruno.kay2304@gmail.com"
+             class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-gold hover:bg-white/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>
+            </svg>
+          </a>
+
+          <!-- WhatsApp -->
+          <a href="https://wa.me/5543988506395"
+             target="_blank"
+             class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-green-400 hover:bg-white/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.52 3.48A11.86 11.86 0 0 0 12.05 0C5.48 0 .13 5.35.13 11.93c0 2.1.55 4.14 1.6 5.94L0 24l6.32-1.66a11.9 11.9 0 0 0 5.73 1.46h.01c6.57 0 11.92-5.35 11.92-11.93 0-3.18-1.24-6.17-3.46-8.39zM12.06 21.3a9.38 9.38 0 0 1-4.78-1.3l-.34-.2-3.75.98 1-3.66-.22-.38a9.39 9.39 0 1 1 8.1 4.56zm5.14-7.02c-.28-.14-1.64-.8-1.9-.9-.25-.09-.43-.14-.61.14-.18.28-.7.9-.86 1.08-.16.19-.32.21-.6.07-.28-.14-1.18-.43-2.25-1.38-.83-.74-1.4-1.66-1.56-1.94-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.49.14-.16.18-.28.28-.47.09-.19.04-.35-.02-.49-.07-.14-.61-1.47-.84-2.02-.22-.52-.44-.45-.61-.46h-.52c-.18 0-.47.07-.72.35s-.94.92-.94 2.25c0 1.33.96 2.61 1.1 2.79.14.19 1.88 2.87 4.55 4.02.63.27 1.12.43 1.5.55.63.2 1.2.17 1.65.1.5-.08 1.64-.67 1.87-1.31.23-.64.23-1.18.16-1.3-.06-.12-.25-.19-.53-.33z"/>
+            </svg>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <div>
+        <h4 class="font-semibold text-lg mb-6 text-white">Navegação</h4>
+        <ul class="space-y-4 text-gray-400">
+          <li><a href="#inicio" class="hover:text-gold transition">Início</a></li>
+          <li><a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition">Projetos</a></li>
+          <li><a href="#servicos" class="hover:text-gold transition">Serviços</a></li>
+          <li><a href="https://brunoxzr.github.io/portfolio/index.html" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition">Sobre</a></li>
+          <li><a href="#contato" class="hover:text-gold transition">Contato</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h4 class="font-semibold text-lg mb-6 text-white">Contato</h4>
+
+        <ul class="space-y-5 text-gray-400">
+
+          <li>
+            <a href="https://wa.me/5543988506395" target="_blank" class="hover:text-gold transition">
+              WhatsApp
+            </a>
+          </li>
+
+          <li>
+            <a href="mailto:bruno.kay2304@gmail.com" class="hover:text-gold transition">
+              bruno.kay2304@gmail.com
+            </a>
+          </li>
+
+
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom -->
+    <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-gray-500">
+        © 2026 KayTech Solutions. Todos os direitos reservados.
+      </p>
+
+      <p class="text-sm text-gray-500">
+        Desenvolvido com <span class="text-gold">excelência</span>.
+      </p>
+    </div>
+
+  </div>
+</footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+        
+        // Loading Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+            }, 800);
+        });
+        
+        // Create Particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        // Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMobileMenu = document.getElementById('closeMobileMenu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('open');
+        });
+        
+        closeMobileMenu.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+        });
+        
+        // Close mobile menu on link click
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+        });
+        
+        // Scroll Reveal Animation
+        function reveal() {
+            const elements = document.querySelectorAll('.fade-up, .fade-in');
+            const windowHeight = window.innerHeight;
+            
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 100;
+                
+                if (elementTop < windowHeight - elementVisible) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', reveal);
+        window.addEventListener('load', reveal);
+        
+        // Counter Animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            const speed = 200;
+            
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-target');
+                const count = +counter.innerText;
+                const increment = target / speed;
+                
+                const updateCount = () => {
+                    const current = +counter.innerText;
+                    if (current < target) {
+                        counter.innerText = Math.ceil(current + increment);
+                        setTimeout(updateCount, 10);
+                    } else {
+                        counter.innerText = target + '+';
+                    }
+                };
+                
+                // Start counter when element is visible
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            updateCount();
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.5 });
+                
+                observer.observe(counter);
+            });
+        }
+        
+        animateCounters();
+        
+        // Smooth Scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Parallax effect on scroll (subtle)
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.float, .float-delayed');
+            
+            parallaxElements.forEach(el => {
+                const speed = 0.02;
+                el.style.transform = `translateY(${scrolled * speed}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
