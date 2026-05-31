@@ -1,0 +1,2660 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KayVision | Gestão Inteligente de Fluxo</title>
+
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --bg-soft: #151515;
+      --bg-card: rgba(255, 255, 255, 0.045);
+      --text: #f4f4f4;
+      --muted: #a5a5a5;
+      --line: rgba(255, 255, 255, 0.11);
+      --white: #ffffff;
+      --accent: #d9d9d9;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      --radius: 26px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 32%),
+        radial-gradient(circle at top right, rgba(255,255,255,0.04), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+
+    .header {
+      position: fixed;
+      top: 18px;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .nav {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      height: 74px;
+      padding: 0 24px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(12, 12, 12, 0.72);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      pointer-events: all;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 66px;
+      height: 66px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 14px rgba(255,255,255,.08));
+    }
+
+    .brand-name {
+      font-size: .95rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .menu {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      color: #d6d6d6;
+      font-size: .92rem;
+    }
+
+    .menu a {
+      transition: .25s ease;
+    }
+
+    .menu a:hover {
+      color: var(--white);
+    }
+
+    .nav-cta {
+      padding: 12px 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      background: #f5f5f5;
+      color: #111;
+      font-weight: 700;
+      font-size: .88rem;
+      transition: .25s ease;
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      background: #fff;
+    }
+
+    .mobile-btn {
+      display: none;
+      background: none;
+      border: 0;
+      color: #fff;
+      font-size: 1.6rem;
+      cursor: pointer;
+    }
+
+    /* HERO */
+
+    .hero {
+      min-height: 100vh;
+      padding: 150px 0 80px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(3,3,3,.88) 0%, rgba(3,3,3,.68) 38%, rgba(3,3,3,.36) 70%, rgba(3,3,3,.74) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.92));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-video-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .hero-video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.05);
+      filter: blur(3px) brightness(.68) saturate(1.05);
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-copy {
+      max-width: 860px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: #dcdcdc;
+      font-size: .83rem;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 18px rgba(255,255,255,.8);
+    }
+
+    .hero h1 {
+      font-size: clamp(3.3rem, 6.6vw, 7.2rem);
+      line-height: .92;
+      letter-spacing: -.04em;
+      max-width: 860px;
+    }
+
+    .hero h1 span {
+      position: relative;
+      display: inline-block;
+      margin-top: .08em;
+      padding: .02em .16em .08em;
+      color: #080808;
+      background:
+        linear-gradient(100deg, #f7f7f7 0%, #ffffff 42%, #bdbdbd 50%, #ffffff 58%, #f7f7f7 100%);
+      background-size: 220% 100%;
+      border-radius: .08em;
+      letter-spacing: -.055em;
+      box-shadow: 0 22px 60px rgba(255,255,255,.08);
+      transform: rotate(-1deg);
+      animation: invertedSweep 5.2s ease-in-out infinite;
+    }
+
+    .hero h1 span::after {
+      content: "";
+      position: absolute;
+      inset: .12em .12em .16em;
+      border: 1px solid rgba(0,0,0,.18);
+      border-radius: .045em;
+      pointer-events: none;
+    }
+
+    .hero p {
+      margin-top: 24px;
+      max-width: 560px;
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    @keyframes invertedSweep {
+      0%, 45% {
+        background-position: 120% 0;
+        transform: rotate(-1deg) translateY(0);
+      }
+      70% {
+        background-position: -60% 0;
+        transform: rotate(-1deg) translateY(-3px);
+      }
+      100% {
+        background-position: -80% 0;
+        transform: rotate(-1deg) translateY(0);
+      }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 24px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .94rem;
+      transition: .25s ease;
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: #111;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(255,255,255,.12);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--line);
+      color: #fff;
+      background: rgba(255,255,255,.035);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,.08);
+      transform: translateY(-3px);
+    }
+
+    .hero-panel {
+      position: relative;
+    }
+
+    .video-card {
+      position: relative;
+      border-radius: 34px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: #111;
+      box-shadow: var(--shadow);
+      min-height: 570px;
+      isolation: isolate;
+    }
+
+    .video-card video {
+      width: 100%;
+      height: 570px;
+      object-fit: cover;
+      display: block;
+      opacity: .88;
+      filter: contrast(1.12);
+    }
+
+    .video-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.05), rgba(0,0,0,.82)),
+        radial-gradient(circle at 40% 20%, rgba(255,255,255,.14), transparent 34%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .detection-frame {
+      position: absolute;
+      z-index: 3;
+      left: 12%;
+      top: 22%;
+      width: 34%;
+      height: 42%;
+      border: 1px solid rgba(255,255,255,.88);
+      border-radius: 18px;
+      box-shadow: 0 0 34px rgba(255,255,255,.08);
+    }
+
+    .detection-frame::before {
+      content: "PERSON TRACKING";
+      position: absolute;
+      left: 12px;
+      top: -30px;
+      font-size: .68rem;
+      letter-spacing: .16em;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.16);
+      padding: 7px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+
+    .detection-frame.two {
+      left: auto;
+      right: 13%;
+      top: 35%;
+      width: 26%;
+      height: 34%;
+      opacity: .82;
+    }
+
+    .hero-stats {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 22px;
+      background: rgba(10,10,10,.72);
+      backdrop-filter: blur(14px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.5rem;
+      letter-spacing: -.04em;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 5px;
+      color: #aaa;
+      font-size: .76rem;
+      line-height: 1.3;
+    }
+
+    /* SECTIONS */
+
+    section {
+      padding: 95px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    main section::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(0,0,0,.42),
+          rgba(0,0,0,.2) 44%,
+          transparent 74%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+      z-index: 1;
+    }
+
+    main section:hover::after {
+      opacity: 1;
+    }
+
+    main section > .page {
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 30px;
+      margin-bottom: 36px;
+    }
+
+    .section-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .24em;
+      font-size: .76rem;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: clamp(2.1rem, 4vw, 4.2rem);
+      line-height: 1;
+      letter-spacing: -.055em;
+      max-width: 760px;
+    }
+
+    .section-desc {
+      max-width: 430px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: .98rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      min-height: 260px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+      transition: .28s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      right: -80px;
+      top: -80px;
+      background: rgba(255,255,255,.055);
+      filter: blur(4px);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255,255,255,.25);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+    }
+
+    .card .num {
+      color: #fff;
+      font-size: .78rem;
+      letter-spacing: .2em;
+      margin-bottom: 36px;
+      display: block;
+    }
+
+    .card h3 {
+      font-size: 1.38rem;
+      letter-spacing: -.03em;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: .95rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* SOLUTION */
+
+    .solution {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+
+    .solution-grid {
+      display: grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .mockup {
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      background: #111;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .mockup-top {
+      height: 46px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 16px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.25);
+    }
+
+    .dash {
+      padding: 18px 0 0;
+    }
+
+    .dash-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .dash-box {
+      min-height: 116px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      background: rgba(255,255,255,.045);
+      padding: 18px;
+    }
+
+    .dash-box small {
+      color: var(--muted);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+    }
+
+    .dash-box strong {
+      display: block;
+      margin-top: 18px;
+      font-size: 2rem;
+      letter-spacing: -.05em;
+    }
+
+    .chart {
+      height: 170px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px;
+      background:
+        linear-gradient(to top, rgba(255,255,255,.055), transparent),
+        repeating-linear-gradient(to right, transparent 0 13%, rgba(255,255,255,.045) 13% 13.3%);
+      display: flex;
+      align-items: end;
+      gap: 10px;
+      padding: 18px;
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(to top, #fff, rgba(255,255,255,.22));
+      min-height: 22%;
+      opacity: .9;
+    }
+
+    .bar:nth-child(1) { height: 38%; }
+    .bar:nth-child(2) { height: 54%; }
+    .bar:nth-child(3) { height: 45%; }
+    .bar:nth-child(4) { height: 76%; }
+    .bar:nth-child(5) { height: 68%; }
+    .bar:nth-child(6) { height: 88%; }
+    .bar:nth-child(7) { height: 61%; }
+
+    /* FLOW */
+
+    .journey {
+      padding: 70px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.035), transparent),
+        #101010;
+    }
+
+    .journey-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.1);
+    }
+
+    .journey-card {
+      min-height: 250px;
+      padding: 30px;
+      background: rgba(255,255,255,.035);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: .25s ease;
+    }
+
+    .journey-card:hover {
+      background: rgba(255,255,255,.065);
+    }
+
+    .journey-card span {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .18em;
+      font-size: .72rem;
+    }
+
+    .journey-card strong {
+      display: block;
+      margin-top: 42px;
+      font-size: 1.32rem;
+      line-height: 1.15;
+    }
+
+    .journey-card p {
+      margin-top: 16px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: .94rem;
+    }
+
+    /* DASHBOARD PREVIEW */
+
+    .dashboard-preview {
+      background:
+        radial-gradient(circle at 18% 22%, rgba(255,255,255,.08), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01));
+    }
+
+    .dashboard-intro {
+      text-align: center;
+      max-width: 820px;
+      margin: 0 auto 44px;
+    }
+
+    .dashboard-intro .section-label {
+      width: fit-content;
+      margin: 0 auto 18px;
+      padding: 10px 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      letter-spacing: .18em;
+    }
+
+    .dashboard-intro .section-title {
+      margin: 0 auto;
+      max-width: 760px;
+    }
+
+    .dashboard-intro p {
+      margin: 22px auto 0;
+      max-width: 620px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .dashboard-shell {
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 28px;
+      background: #121314;
+      box-shadow: 0 34px 110px rgba(0,0,0,.55);
+      overflow: hidden;
+    }
+
+    .dashboard-toolbar {
+      height: 62px;
+      padding: 0 22px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #151617;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-dots span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #f35f5f;
+    }
+
+    .window-dots span:nth-child(2) { background: #f4bc36; }
+    .window-dots span:nth-child(3) { background: #31c56b; }
+
+    .dashboard-tabs {
+      display: flex;
+      gap: 9px;
+    }
+
+    .dashboard-tabs span {
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.055);
+      color: #aaa;
+      font-size: .86rem;
+    }
+
+    .dashboard-tabs span:first-child {
+      background: #fff;
+      color: #111;
+      font-weight: 800;
+    }
+
+    .dashboard-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #101112;
+    }
+
+    /* TECHNOLOGIES */
+
+    .technologies {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(8,8,8,.62), rgba(8,8,8,.38)),
+        url("https://kayvision.espacoassahi.com.br/assets/imgs/kayvision/fundinho.png") center / cover no-repeat;
+    }
+
+    .technologies .page {
+      position: relative;
+      z-index: 2;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.14);
+      box-shadow: 0 28px 90px rgba(0,0,0,.28);
+    }
+
+    .tech-card {
+      min-height: 390px;
+      padding: 34px;
+      background: rgba(15,15,15,.42);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: .25s ease;
+    }
+
+    .tech-card:hover {
+      background: rgba(8,8,8,.68);
+      transform: translateY(-4px);
+    }
+
+    .tech-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #fff;
+      color: #111;
+      font-weight: 900;
+      margin-bottom: 30px;
+    }
+
+    .tech-card h3 {
+      font-size: 1.45rem;
+      margin-bottom: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .tech-card p {
+      color: #c4c4c4;
+      line-height: 1.75;
+      font-size: .96rem;
+    }
+
+    .tech-link {
+      width: fit-content;
+      margin-top: 28px;
+      color: #fff;
+      font-weight: 900;
+      border-bottom: 1px solid rgba(255,255,255,.55);
+      padding-bottom: 5px;
+    }
+
+    .screens-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .screen-showcase {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 12px;
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .screen-showcase img {
+      width: 100%;
+      height: 100%;
+      min-height: 330px;
+      object-fit: cover;
+      display: block;
+      border-radius: 18px;
+    }
+
+    .work-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .work-item {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .work-item strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.08rem;
+    }
+
+    .work-item span {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: .94rem;
+    }
+
+    .pricing {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 50% 0, rgba(255,255,255,.08), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+    }
+
+    .pricing-head {
+      max-width: 760px;
+      margin: 0 auto 44px;
+      text-align: center;
+    }
+
+    .pricing-head .section-label {
+      width: fit-content;
+      margin: 0 auto 18px;
+      padding: 10px 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      letter-spacing: .18em;
+    }
+
+    .pricing-head .section-title {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .pricing-head p {
+      max-width: 650px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .price-card {
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.062), rgba(255,255,255,.026));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .price-card.featured {
+      border-color: rgba(255,255,255,.32);
+      background:
+        radial-gradient(circle at 50% 0, rgba(255,255,255,.16), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      box-shadow: 0 26px 90px rgba(0,0,0,.42);
+    }
+
+    .price-card.featured::before {
+      content: "Mais escolhido";
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      background: #fff;
+      color: #111;
+      font-size: .76rem;
+      font-weight: 900;
+    }
+
+    .plan-kicker {
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .17em;
+      margin-bottom: 18px;
+    }
+
+    .price-card h3 {
+      font-size: 1.7rem;
+      margin-bottom: 8px;
+      letter-spacing: -.02em;
+    }
+
+    .price-subtitle {
+      color: #d8d8d8;
+      font-weight: 700;
+      margin-bottom: 24px;
+      line-height: 1.35;
+    }
+
+    .price {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 24px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+
+    .price strong {
+      font-size: clamp(2.6rem, 4vw, 4rem);
+      line-height: 1;
+    }
+
+    .price span {
+      color: var(--muted);
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .includes-title {
+      margin: 18px 0 14px;
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 900;
+    }
+
+    .price-card ul {
+      list-style: none;
+      display: grid;
+      gap: 11px;
+      margin-bottom: 28px;
+    }
+
+    .price-card li {
+      color: #cfcfcf;
+      line-height: 1.45;
+      font-size: .94rem;
+      display: flex;
+      gap: 10px;
+    }
+
+    .price-card li::before {
+      content: "✓";
+      color: #fff;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .price-card .btn {
+      width: 100%;
+    }
+
+    .price-card.featured .btn {
+      background: #fff;
+      color: #111;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .list-item {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,.035);
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.05);
+      font-weight: 900;
+    }
+
+    .list-item h3 {
+      font-size: 1.05rem;
+      margin-bottom: 7px;
+    }
+
+    .list-item p {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: .94rem;
+    }
+
+    /* FEATURES */
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+    }
+
+    .big-feature {
+      min-height: 460px;
+      border-radius: 34px;
+      border: 1px solid var(--line);
+      padding: 34px;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+        radial-gradient(circle at top right, rgba(255,255,255,.09), transparent 34%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .big-feature h3 {
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: .96;
+      letter-spacing: -.06em;
+      max-width: 600px;
+    }
+
+    .big-feature p {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 530px;
+    }
+
+    .feature-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .mini-feature {
+      min-height: 221px;
+      border-radius: 30px;
+      border: 1px solid var(--line);
+      padding: 28px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .mini-feature h3 {
+      margin-bottom: 14px;
+      font-size: 1.26rem;
+    }
+
+    .mini-feature p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: .94rem;
+    }
+
+    /* CTA */
+
+    .cta {
+      padding-bottom: 120px;
+    }
+
+    .cta-box {
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 38px;
+      padding: clamp(34px, 6vw, 70px);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,.13), transparent 28%),
+        linear-gradient(135deg, rgba(255,255,255,.085), rgba(255,255,255,.025));
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .cta h2 {
+      font-size: clamp(2.4rem, 5vw, 5.2rem);
+      line-height: .94;
+      letter-spacing: -.07em;
+      max-width: 820px;
+    }
+
+    .cta p {
+      margin-top: 22px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 620px;
+    }
+
+    .contact-actions {
+      display: grid;
+      gap: 12px;
+      min-width: 260px;
+    }
+
+    .contact-link {
+      min-height: 54px;
+      padding: 0 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: #fff;
+      transition: .25s ease;
+    }
+
+    .contact-link.primary {
+      background: #fff;
+      color: #111;
+    }
+
+    .contact-link:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255,255,255,.25);
+    }
+
+    /* FOOTER */
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 34px 0;
+      color: var(--muted);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      font-size: .9rem;
+    }
+
+    /* REVEAL */
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: .8s ease;
+    }
+
+    .reveal.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* RESPONSIVO */
+
+    @media (max-width: 960px) {
+      .menu {
+        position: absolute;
+        top: 86px;
+        left: 20px;
+        right: 20px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(12,12,12,.96);
+        display: none;
+      }
+
+      .menu.active {
+        display: flex;
+      }
+
+      .menu a {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      .nav-cta {
+        text-align: center;
+        margin-top: 8px;
+      }
+
+      .mobile-btn {
+        display: block;
+      }
+
+      .solution-grid,
+      .features-grid,
+      .screens-grid,
+      .pricing-grid,
+      .cta-box {
+        grid-template-columns: 1fr;
+      }
+
+      .journey-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .video-card,
+      .video-card video {
+        min-height: 460px;
+        height: 460px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .section-desc {
+        margin-top: 18px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page,
+      .nav {
+        width: min(100% - 26px, 1180px);
+      }
+
+      .nav {
+        height: 68px;
+        padding: 0 16px;
+      }
+
+      .brand-name {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 125px;
+      }
+
+      .hero h1 {
+        font-size: 3rem;
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .video-card,
+      .video-card video {
+        height: 560px;
+      }
+
+      .dash-row {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        align-items: start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<header class="header">
+  <nav class="nav">
+    <a href="https://kayvision.espacoassahi.com.br" class="brand">
+      <img src="https://kayvision.espacoassahi.com.br/assets/imgs/kayvision/logo.png" alt="KayVision">
+
+    </a>
+
+    <div class="menu" id="menu">
+      <a href="https://kayvision.espacoassahi.com.br#tecnologias">Soluções</a>
+      <a href="https://kayvision.espacoassahi.com.br#plataforma">Plataforma</a>
+      <a href="https://kayvision.espacoassahi.com.br#investimento">Planos</a>
+      <a href="https://kayvision.espacoassahi.com.br/loja-inteligente">Loja inteligente</a>
+      <a href="https://kayvision.espacoassahi.com.br#contato" class="nav-cta">Solicitar análise</a>
+    </div>
+
+    <button class="mobile-btn" id="mobileBtn" aria-label="Abrir menu">☰</button>
+  </nav>
+</header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-video-bg">
+        <video src="https://kayvision.espacoassahi.com.br/assets/imgs/kayvision/hero.mp4" autoplay muted loop playsinline></video>
+      </div>
+
+      <div class="page hero-grid">
+        <div class="hero-copy reveal">
+          <h1>
+            Veja o fluxo. <br>
+            Entenda o público. <br>
+            <span>Decida melhor.</span>
+          </h1>
+
+          <p>
+            A KayVision transforma movimentação de pessoas em indicadores claros para gestão.
+            Com visão computacional, relatórios e dashboards, sua operação deixa de depender de
+            achismos e passa a trabalhar com dados reais.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#contato" class="btn btn-primary">Quero conhecer</a>
+            <a href="#solucao" class="btn btn-secondary">Ver solução</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="journey" id="caminhos">
+      <div class="page journey-grid">
+        <article class="journey-card reveal">
+          <span>Atendimento</span>
+          <div>
+            <strong>Equipe no horário certo.</strong>
+            <p>Use os horários de pico para organizar escala, caixa, recepção e segurança.</p>
+          </div>
+        </article>
+
+        <article class="journey-card reveal">
+          <span>Layout</span>
+          <div>
+            <strong>Espaço pensado pelo fluxo real.</strong>
+            <p>Descubra áreas quentes, pontos frios e caminhos que atrapalham a circulação.</p>
+          </div>
+        </article>
+
+        <article class="journey-card reveal">
+          <span>Comercial</span>
+          <div>
+            <strong>Campanhas com leitura de resultado.</strong>
+            <p>Compare movimento antes, durante e depois de ações, vitrines e promoções.</p>
+          </div>
+        </article>
+
+        <article class="journey-card reveal">
+          <span>Gestão</span>
+          <div>
+            <strong>Menos achismo na reunião.</strong>
+            <p>Leve números claros para decidir operação, investimento e melhoria contínua.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-preview" id="dashboard">
+      <div class="page">
+        <div class="dashboard-intro reveal">
+          <div class="section-label">Dashboard</div>
+          <h2 class="section-title">Visualize a operação da loja em tempo real.</h2>
+          <p>
+            Um painel direto para acompanhar entrada, permanência, zonas quentes e evolução do fluxo
+            sem depender de planilhas soltas ou percepções do dia.
+          </p>
+        </div>
+
+        <div class="dashboard-shell reveal">
+          <div class="dashboard-toolbar">
+            <div class="window-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="dashboard-tabs">
+              <span>Visão geral</span>
+              <span>Fluxo</span>
+              <span>Mapas</span>
+              <span>Relatórios</span>
+            </div>
+          </div>
+
+          <svg class="dashboard-svg" viewBox="0 0 1180 520" role="img" aria-label="Interface KayVision com indicadores de fluxo">
+            <defs>
+              <linearGradient id="barFill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#f5f5f5"/>
+                <stop offset="1" stop-color="#8d8d8d"/>
+              </linearGradient>
+              <linearGradient id="heatFill" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity=".9"/>
+                <stop offset=".48" stop-color="#b9b9b9" stop-opacity=".62"/>
+                <stop offset="1" stop-color="#5f5f5f" stop-opacity=".55"/>
+              </linearGradient>
+              <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="18" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <rect x="0" y="0" width="1180" height="520" fill="#101112"/>
+            <rect x="0" y="0" width="205" height="520" fill="#151617"/>
+            <line x1="205" y1="0" x2="205" y2="520" stroke="#2d2d2d"/>
+
+            <rect x="28" y="36" width="150" height="48" rx="12" fill="#242526"/>
+            <circle cx="50" cy="60" r="8" fill="#f2f2f2"/>
+            <rect x="68" y="53" width="78" height="13" rx="6" fill="#f2f2f2"/>
+            <g fill="#8f8f8f" font-family="Arial, Helvetica, sans-serif" font-size="15">
+              <text x="55" y="137">Locais</text>
+              <text x="55" y="195">Heatmaps</text>
+              <text x="55" y="253">Análises</text>
+              <text x="55" y="311">Configurações</text>
+            </g>
+            <g fill="#676767">
+              <circle cx="36" cy="132" r="5"/>
+              <circle cx="36" cy="190" r="5"/>
+              <circle cx="36" cy="248" r="5"/>
+              <circle cx="36" cy="306" r="5"/>
+            </g>
+
+            <g transform="translate(240 38)">
+              <rect width="205" height="118" rx="14" fill="#202122" stroke="#363738"/>
+              <text x="22" y="38" fill="#9c9c9c" font-family="Arial, Helvetica, sans-serif" font-size="14">Visitantes hoje</text>
+              <text x="22" y="78" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">2.847</text>
+              <text x="22" y="102" fill="#cecece" font-family="Arial, Helvetica, sans-serif" font-size="13">+12% vs ontem</text>
+            </g>
+
+            <g transform="translate(465 38)">
+              <rect width="205" height="118" rx="14" fill="#202122" stroke="#363738"/>
+              <text x="22" y="38" fill="#9c9c9c" font-family="Arial, Helvetica, sans-serif" font-size="14">Tempo médio</text>
+              <text x="22" y="78" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">18min</text>
+              <text x="22" y="102" fill="#cecece" font-family="Arial, Helvetica, sans-serif" font-size="13">+5% vs média</text>
+            </g>
+
+            <g transform="translate(690 38)">
+              <rect width="205" height="118" rx="14" fill="#202122" stroke="#363738"/>
+              <text x="22" y="38" fill="#9c9c9c" font-family="Arial, Helvetica, sans-serif" font-size="14">Pico de fluxo</text>
+              <text x="22" y="78" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">20:00</text>
+              <text x="22" y="102" fill="#cecece" font-family="Arial, Helvetica, sans-serif" font-size="13">1730 entradas</text>
+            </g>
+
+            <g transform="translate(915 38)">
+              <rect width="205" height="118" rx="14" fill="#202122" stroke="#363738"/>
+              <text x="22" y="38" fill="#9c9c9c" font-family="Arial, Helvetica, sans-serif" font-size="14">Ocupação atual</text>
+              <text x="22" y="78" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">64%</text>
+              <text x="22" y="102" fill="#cecece" font-family="Arial, Helvetica, sans-serif" font-size="13">dentro do ideal</text>
+            </g>
+
+            <rect x="240" y="195" width="590" height="255" rx="16" fill="#202122" stroke="#363738"/>
+            <text x="264" y="230" fill="#dcdcdc" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">Fluxo por horário</text>
+            <g transform="translate(270 265)">
+              <line x1="0" y1="150" x2="510" y2="150" stroke="#3a3a3a"/>
+              <g fill="url(#barFill)">
+                <rect x="0" y="96" width="32" height="54" rx="8"/>
+                <rect x="47" y="70" width="32" height="80" rx="8"/>
+                <rect x="94" y="104" width="32" height="46" rx="8"/>
+                <rect x="141" y="48" width="32" height="102" rx="8"/>
+                <rect x="188" y="86" width="32" height="64" rx="8"/>
+                <rect x="235" y="31" width="32" height="119" rx="8"/>
+                <rect x="282" y="62" width="32" height="88" rx="8"/>
+                <rect x="329" y="42" width="32" height="108" rx="8"/>
+                <rect x="376" y="82" width="32" height="68" rx="8"/>
+                <rect x="423" y="20" width="32" height="130" rx="8"/>
+                <rect x="470" y="56" width="32" height="94" rx="8"/>
+              </g>
+            </g>
+
+            <rect x="858" y="195" width="262" height="255" rx="16" fill="#202122" stroke="#363738"/>
+            <text x="882" y="230" fill="#dcdcdc" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">Mapa de calor</text>
+            <rect x="884" y="258" width="210" height="150" rx="14" fill="#151617" stroke="#333"/>
+            <ellipse cx="950" cy="316" rx="52" ry="38" fill="url(#heatFill)" filter="url(#softGlow)" opacity=".75"/>
+            <ellipse cx="1024" cy="350" rx="42" ry="30" fill="#e8e8e8" filter="url(#softGlow)" opacity=".52"/>
+            <ellipse cx="997" cy="296" rx="24" ry="18" fill="#fff" opacity=".58"/>
+            <path d="M902 382 C955 355 1020 376 1076 330" fill="none" stroke="#8a8a8a" stroke-width="2" stroke-dasharray="6 8"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="technologies" id="tecnologias">
+      <div class="page">
+        <div class="section-head reveal">
+          <div>
+            <div class="section-label">O que oferecemos</div>
+            <h2 class="section-title">Tecnologias para entender sua loja com precisão.</h2>
+          </div>
+
+          <p class="section-desc">
+            Cada módulo mostra uma parte importante da operação física: fluxo, permanência e zonas de maior interesse.
+          </p>
+        </div>
+
+        <div class="tech-grid">
+          <a href="https://kayvision.espacoassahi.com.br/loja-inteligente#comportamento" class="tech-card reveal">
+            <div>
+              <div class="tech-mark">1</div>
+              <h3>Comportamento de Loja</h3>
+              <p>
+                Analise como o público circula, onde permanece e quais padrões aparecem ao longo do dia.
+              </p>
+            </div>
+            <span class="tech-link">Saiba mais</span>
+          </a>
+
+          <a href="https://kayvision.espacoassahi.com.br/loja-inteligente#contador" class="tech-card reveal">
+            <div>
+              <div class="tech-mark">2</div>
+              <h3>Contador de pessoas</h3>
+              <p>
+                Meça entradas, saídas, horários de pico e variações por período com dados claros.
+              </p>
+            </div>
+            <span class="tech-link">Saiba mais</span>
+          </a>
+
+          <a href="https://kayvision.espacoassahi.com.br/loja-inteligente#mapa-calor" class="tech-card reveal">
+            <div>
+              <div class="tech-mark">3</div>
+              <h3>Hot Zones</h3>
+              <p>
+                Identifique áreas quentes, pontos frios e oportunidades para melhorar layout e exposição.
+              </p>
+            </div>
+            <span class="tech-link">Saiba mais</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="beneficios">
+      <div class="page">
+        <div class="section-head reveal">
+          <div>
+            <div class="section-label">Benefícios</div>
+            <h2 class="section-title">Gestão baseada em comportamento real.</h2>
+          </div>
+
+          <p class="section-desc">
+            A plataforma ajuda empresas, eventos e espaços comerciais a enxergarem padrões que normalmente passam despercebidos.
+          </p>
+        </div>
+
+        <div class="cards">
+          <article class="card reveal">
+            <span class="num">01</span>
+            <h3>Decisões com dados</h3>
+            <p>
+              Substitua suposições por indicadores claros sobre volume, horários de pico,
+              permanência e comportamento do público.
+            </p>
+          </article>
+
+          <article class="card reveal">
+            <span class="num">02</span>
+            <h3>Operação mais eficiente</h3>
+            <p>
+              Organize equipes, atendimento, segurança e estrutura de acordo com os períodos
+              de maior movimentação.
+            </p>
+          </article>
+
+          <article class="card reveal">
+            <span class="num">03</span>
+            <h3>Relatórios executivos</h3>
+            <p>
+              Visualize dados em dashboards objetivos para reuniões, planejamento comercial
+              e acompanhamento de resultados.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="pricing" id="investimento">
+      <div class="page">
+        <div class="pricing-head reveal">
+          <div class="section-label">Planos KayVision</div>
+          <h2 class="section-title">Escolha o modelo ideal para transformar fluxo em dados reais.</h2>
+          <p>
+            Planos pensados para diferentes níveis de operação: da contagem essencial ao portal completo com sistemas integrados.
+          </p>
+        </div>
+
+        <div class="pricing-grid">
+          <article class="price-card reveal">
+            <div>
+              <div class="plan-kicker">Sistema de contagem de fluxo</div>
+              <h3>Essencial</h3>
+              <div class="price-subtitle">Contagem clara de entradas, saídas e movimentação geral.</div>
+              <div class="price">
+                <strong>R$ 497</strong>
+                <span>/mês</span>
+              </div>
+
+              <div class="includes-title">Principais recursos</div>
+              <ul>
+                <li>Até 2 câmeras</li>
+                <li>Contagem de fluxo de pessoas</li>
+                <li>Entradas e saídas por período</li>
+                <li>Dashboard básico</li>
+                <li>Relatórios semanais</li>
+              </ul>
+            </div>
+
+            <a href="#contato" class="btn btn-secondary">Começar com o Essencial</a>
+          </article>
+
+          <article class="price-card featured reveal">
+            <div>
+              <div class="plan-kicker">Fluxo + Hot Zones</div>
+              <h3>Intelligence</h3>
+              <div class="price-subtitle">Fluxo, permanência e áreas de maior atenção em tempo real.</div>
+              <div class="price">
+                <strong>R$ 697</strong>
+                <span>/mês</span>
+              </div>
+
+              <div class="includes-title">Principais recursos</div>
+              <ul>
+                <li>Até 5 câmeras</li>
+                <li>Tudo do plano Essencial</li>
+                <li>Hot Zones e zonas de circulação</li>
+                <li>Tempo médio de permanência</li>
+                <li>Relatórios em tempo real</li>
+              </ul>
+            </div>
+
+            <a href="#contato" class="btn btn-primary">Escolher Intelligence</a>
+          </article>
+
+          <article class="price-card reveal">
+            <div>
+              <div class="plan-kicker">Portal completo + sistemas</div>
+              <h3>Institution</h3>
+              <div class="price-subtitle">Portal próprio, gestão centralizada e integrações para operações maiores.</div>
+              <div class="price">
+                <strong>R$ 997</strong>
+                <span>/mês</span>
+              </div>
+
+              <div class="includes-title">Principais recursos</div>
+              <ul>
+                <li>Até 10 câmeras</li>
+                <li>Tudo do plano Intelligence</li>
+                <li>Portal personalizado</li>
+                <li>Gestão de dados e relatórios</li>
+                <li>Integração com outros sistemas</li>
+              </ul>
+            </div>
+
+            <a href="#contato" class="btn btn-secondary">Falar sobre o Institution</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="contato">
+      <div class="page">
+        <div class="cta-box reveal">
+          <div>
+            <h2>Pronto para enxergar sua operação de outro jeito?</h2>
+            <p>
+              Solicite uma demonstração da KayVision e veja como dados de fluxo podem melhorar
+              decisões, atendimento, segurança e planejamento.
+            </p>
+          </div>
+
+          <div class="contact-actions">
+            <a href="https://wa.me/5543988506395" target="_blank" rel="noopener" class="contact-link primary">WhatsApp: 43 98850-6395</a>
+            <a href="mailto:bruno.kay2304@gmail.com" class="contact-link">bruno.kay2304@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="page footer-content">
+      <p>© 2026 KayVision. Todos os direitos reservados.</p>
+      <p>Kay Solutions · Flow Intelligence</p>
+    </div>
+  </footer>
+
+  <script>
+    const mobileBtn = document.getElementById("mobileBtn");
+    const menu = document.getElementById("menu");
+
+    mobileBtn.addEventListener("click", () => {
+      menu.classList.toggle("active");
+      mobileBtn.textContent = menu.classList.contains("active") ? "×" : "☰";
+    });
+
+    document.querySelectorAll(".menu a").forEach(link => {
+      link.addEventListener("click", () => {
+        menu.classList.remove("active");
+        mobileBtn.textContent = "☰";
+      });
+    });
+
+    const reveals = document.querySelectorAll(".reveal");
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("show");
+        }
+      });
+    }, {
+      threshold: 0.12
+    });
+
+    reveals.forEach((el) => observer.observe(el));
+
+    const interactiveSections = document.querySelectorAll("main section");
+
+    interactiveSections.forEach((section) => {
+      section.addEventListener("mousemove", (event) => {
+        const rect = section.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+        section.style.setProperty("--mouse-x", `${x}%`);
+        section.style.setProperty("--mouse-y", `${y}%`);
+      });
+    });
+
+    const nav = document.querySelector(".nav");
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 60) {
+        nav.style.background = "rgba(8, 8, 8, 0.88)";
+        nav.style.borderColor = "rgba(255,255,255,.18)";
+      } else {
+        nav.style.background = "rgba(12, 12, 12, 0.72)";
+        nav.style.borderColor = "rgba(255,255,255,.11)";
+      }
+    });
+document.addEventListener("DOMContentLoaded", () => {
+const kvChatButton = document.getElementById("kvChatButton");
+const kvChatWindow = document.getElementById("kvChatWindow");
+const kvChatClose = document.getElementById("kvChatClose");
+const kvChatForm = document.getElementById("kvChatForm");
+const kvChatInput = document.getElementById("kvChatInput");
+const kvChatMessages = document.getElementById("kvChatMessages");
+const kvQuickOptions = document.getElementById("kvQuickOptions");
+const kvChatCallout = document.getElementById("kvChatCallout");
+const kvWhatsAppNumber = "5543988506395";
+
+let kvChatStarted = false;
+let kvChatHistory = [];
+let kvWhatsAppOffered = false;
+let kvWaitingForName = false;
+
+function kvRemember(role, text) {
+  const cleanText = String(text || "").trim();
+
+  if (!cleanText) return;
+
+  kvChatHistory.push({
+    role,
+    text: cleanText
+  });
+
+  kvChatHistory = kvChatHistory.slice(-16);
+}
+
+function kvAddMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "kv-msg " + type;
+  div.textContent = text;
+  kvChatMessages.appendChild(div);
+  kvChatMessages.scrollTop = kvChatMessages.scrollHeight;
+  kvRemember(type === "user" ? "user" : "model", text);
+  return div;
+}
+
+function kvAddTyping() {
+  const div = document.createElement("div");
+  div.className = "kv-msg bot kv-typing";
+  div.innerHTML = "<i></i><i></i><i></i>";
+  kvChatMessages.appendChild(div);
+  kvChatMessages.scrollTop = kvChatMessages.scrollHeight;
+  return div;
+}
+
+function kvTypeMessage(text, type = "bot", speed = 18) {
+  return new Promise((resolve) => {
+    const div = document.createElement("div");
+    div.className = "kv-msg " + type;
+    kvChatMessages.appendChild(div);
+
+    let index = 0;
+
+    const interval = setInterval(() => {
+      div.textContent += text.charAt(index);
+      index++;
+      kvChatMessages.scrollTop = kvChatMessages.scrollHeight;
+
+      if (index >= text.length) {
+        clearInterval(interval);
+        kvRemember(type === "user" ? "user" : "model", text);
+        resolve(div);
+      }
+    }, speed);
+  });
+}
+
+function kvIsWhatsAppRequest(message) {
+  return /(whats|zap|resumo|manda|mandar|enviar|atendente|humano|contato)/i.test(message);
+}
+
+function kvHasEssentialLead() {
+  const visitorText = kvChatHistory
+    .filter((item) => item.role === "user")
+    .map((item) => item.text)
+    .join(" ")
+    .toLowerCase();
+
+  const hasPlace = /(loja|evento|institui|galp[aã]o|empresa|mercado|academia|restaurante|shopping|espa[cç]o|local)/i.test(visitorText);
+  const hasGoal = /(fluxo|entrada|entra|sa[ií]da|sai|gente|pessoas|contar|quantas|quantos|movimenta|presen[cç]a|ocup)/i.test(visitorText);
+  const hasName = /(meu nome|me chamo|sou o|sou a|^nome:)/i.test(visitorText);
+
+  return hasPlace && hasGoal && hasName;
+}
+
+function kvIsLeadDetail(message) {
+  return /(whats|zap|resumo|galp[aã]o|loja|evento|entrada|entra|gente|pessoas|fluxo|quantas|quantos)/i.test(message);
+}
+
+function kvBuildWhatsAppSummary() {
+  const visitorMessages = kvChatHistory
+    .filter((item) => item.role === "user")
+    .map((item) => item.text)
+    .filter((text) => !kvIsWhatsAppRequest(text));
+
+  const context = visitorMessages.length
+    ? visitorMessages.map((text) => `- ${text}`).join("\n")
+    : "- Visitante iniciou atendimento pelo KayBot e quer falar com a KayVision.";
+
+  return [
+    "Olá! Vim pelo KayBot da KayVision.",
+    "",
+    "Resumo do atendimento:",
+    context,
+    "",
+    "Pode me chamar para dar continuidade?"
+  ].join("\n");
+}
+
+async function kvOpenWhatsAppWithSummary() {
+  const summary = kvBuildWhatsAppSummary();
+  const url = `https://wa.me/${kvWhatsAppNumber}?text=${encodeURIComponent(summary)}`;
+
+  const div = document.createElement("div");
+  div.className = "kv-msg bot";
+  div.innerHTML = `Resumo pronto: <a class="kv-whatsapp-link" href="${url}" target="_blank" rel="noopener">abrir WhatsApp</a>`;
+  kvChatMessages.appendChild(div);
+  kvChatMessages.scrollTop = kvChatMessages.scrollHeight;
+
+  kvRemember("model", "Resumo pronto: abrir WhatsApp");
+}
+
+async function kvStartConversation() {
+  if (kvChatStarted) return;
+
+  kvChatStarted = true;
+
+  const typing = kvAddTyping();
+
+  setTimeout(async () => {
+    typing.remove();
+
+    await kvTypeMessage(
+      "Olá! Eu sou o KayBot, assistente virtual da KayVision.",
+      "bot",
+      17
+    );
+
+    setTimeout(async () => {
+      await kvTypeMessage(
+        "Posso te ajudar a entender qual solução combina melhor com seu negócio. Você quer medir fluxo em loja, evento ou instituição?",
+        "bot",
+        14
+      );
+    }, 450);
+  }, 900);
+}
+
+async function kvSendMessage(message) {
+  if (!message) return;
+
+  const recentHistory = kvChatHistory.slice(-12);
+
+  kvAddMessage(message, "user");
+  kvChatInput.value = "";
+
+  if (kvWaitingForName && message.length <= 40 && !kvIsLeadDetail(message)) {
+    kvWaitingForName = false;
+
+    await kvTypeMessage(
+      "Fechado, segue o link do WhatsApp com o resumo.",
+      "bot",
+      12
+    );
+
+    kvWhatsAppOffered = true;
+    await kvOpenWhatsAppWithSummary();
+    return;
+  }
+
+  if (kvIsWhatsAppRequest(message)) {
+    await kvOpenWhatsAppWithSummary();
+    return;
+  }
+
+  const typing = kvAddTyping();
+
+  try {
+    const response = await fetch("https://kayvision.espacoassahi.com.br/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": "zw4jGVKdj3SAGoLuPFQRJwaXmfiTNYBMUEzS9Vhe"
+      },
+      body: JSON.stringify({
+        message,
+        history: recentHistory
+      })
+    });
+
+    const data = await response.json();
+
+    typing.remove();
+
+    await kvTypeMessage(
+      data.reply || "Não consegui responder agora. Me chame no WhatsApp: 43 98850-6395.",
+      "bot",
+      12
+    );
+
+    if (/qual.*nome|nome.*resumo/i.test(data.reply || "")) {
+      kvWaitingForName = true;
+      return;
+    }
+
+    if (!kvWhatsAppOffered && (/link do WhatsApp|resumo/i.test(data.reply || "") || kvHasEssentialLead())) {
+      kvWhatsAppOffered = true;
+      await kvOpenWhatsAppWithSummary();
+    }
+  } catch (error) {
+    typing.remove();
+
+    await kvTypeMessage(
+      "Tive uma instabilidade agora. Posso te atender direto pelo WhatsApp: 43 98850-6395.",
+      "bot",
+      12
+    );
+  }
+}
+
+if (kvChatButton && kvChatWindow) {
+  kvChatButton.addEventListener("click", () => {
+    kvChatWindow.classList.add("active");
+
+    if (kvChatCallout) {
+      kvChatCallout.classList.add("hide");
+    }
+
+    kvStartConversation();
+
+    setTimeout(() => {
+      kvChatInput.focus();
+    }, 250);
+  });
+}
+
+if (kvChatClose && kvChatWindow) {
+  kvChatClose.addEventListener("click", () => {
+    kvChatWindow.classList.remove("active");
+  });
+}
+
+if (kvChatForm) {
+  kvChatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const message = kvChatInput.value.trim();
+
+    await kvSendMessage(message);
+  });
+}
+
+if (kvQuickOptions) {
+  kvQuickOptions.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const message = button.getAttribute("data-message");
+
+      if (button.hasAttribute("data-whatsapp-summary")) {
+        await kvOpenWhatsAppWithSummary();
+        return;
+      }
+
+      await kvSendMessage(message);
+    });
+  });
+}
+
+setTimeout(() => {
+  if (!kvChatStarted && kvChatCallout) {
+    kvChatCallout.textContent = "Precisa de ajuda?";
+  }
+}, 7000);
+});
+  </script>
+  <style>
+    /* Your CSS styles here *//* KAYVISION CHAT IA */
+
+.kv-chat-widget {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 99999;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+}
+
+.kv-chat-callout {
+  position: absolute;
+  right: 72px;
+  bottom: 11px;
+  min-width: 148px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 9px;
+  background: #242426;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: .94rem;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 16px 45px rgba(0,0,0,.38);
+  animation: kvCalloutIn .7s ease both, kvFloatText 3.2s ease-in-out infinite;
+  transform-origin: right center;
+  white-space: nowrap;
+}
+
+.kv-chat-callout::after {
+  content: "";
+  position: absolute;
+  right: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 10px solid #242426;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+}
+
+.kv-chat-callout.hide {
+  opacity: 0;
+  transform: translateX(10px) scale(.95);
+  pointer-events: none;
+}
+
+.kv-chat-float {
+  width: 74px;
+  height: 74px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 0 rgba(255,255,255,.28),
+    0 18px 60px rgba(255,255,255,.12),
+    0 16px 42px rgba(0,0,0,.45);
+  position: relative;
+  animation: kvPulse 2.2s infinite;
+  transition: .25s ease;
+}
+
+.kv-chat-float:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow:
+    0 0 0 14px rgba(255,255,255,.04),
+    0 22px 70px rgba(255,255,255,.16),
+    0 18px 48px rgba(0,0,0,.5);
+}
+
+.kv-chat-float svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: #111;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.kv-notification-dot {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ff3d3d;
+  top: 11px;
+  right: 11px;
+  border: 3px solid #fff;
+  animation: kvDot .9s ease-in-out infinite alternate;
+}
+
+.kv-chat-window {
+  width: min(350px, calc(100vw - 28px));
+  height: 500px;
+  position: absolute;
+  right: 0;
+  bottom: 90px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  background: #101010;
+  box-shadow: 0 28px 90px rgba(0,0,0,.68);
+  display: none;
+  transform-origin: bottom right;
+}
+
+.kv-chat-window.active {
+  display: flex;
+  flex-direction: column;
+  animation: kvWindowIn .28s ease both;
+}
+
+.kv-chat-header {
+  height: 68px;
+  padding: 0 18px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,.12), transparent 36%),
+    #151515;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kv-agent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kv-agent-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: #fff;
+  color: #111;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  position: relative;
+  box-shadow: 0 0 25px rgba(255,255,255,.08);
+}
+
+.kv-agent-avatar span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #2cff7a;
+  border: 2px solid #151515;
+  right: -1px;
+  bottom: 1px;
+  border-radius: 50%;
+}
+
+.kv-agent strong {
+  display: block;
+  font-size: .98rem;
+}
+
+.kv-agent small {
+  display: block;
+  margin-top: 3px;
+  color: #aaa;
+  font-size: .78rem;
+}
+
+.kv-close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: 1.45rem;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.kv-close:hover {
+  background: rgba(255,255,255,.14);
+}
+
+.kv-chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.04), transparent 28%),
+    #101010;
+}
+
+.kv-chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kv-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
+}
+
+.kv-msg {
+  max-width: 86%;
+  padding: 10px 12px;
+  border-radius: 17px;
+  line-height: 1.45;
+  font-size: .88rem;
+  white-space: pre-wrap;
+  animation: kvMsgIn .22s ease both;
+}
+
+.kv-msg.bot {
+  align-self: flex-start;
+  background: rgba(255,255,255,.075);
+  color: #f4f4f4;
+  border: 1px solid rgba(255,255,255,.07);
+  border-bottom-left-radius: 5px;
+}
+
+.kv-msg.user {
+  align-self: flex-end;
+  background: #fff;
+  color: #111;
+  border-bottom-right-radius: 5px;
+}
+
+.kv-whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #08150d;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.kv-typing {
+  width: fit-content;
+  min-width: 64px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+}
+
+.kv-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dcdcdc;
+  animation: kvTyping 1s infinite ease-in-out;
+}
+
+.kv-typing i:nth-child(2) {
+  animation-delay: .15s;
+}
+
+.kv-typing i:nth-child(3) {
+  animation-delay: .3s;
+}
+
+.kv-quick-options {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 12px;
+  overflow-x: auto;
+  background: #101010;
+}
+
+.kv-quick-options button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.055);
+  color: #e9e9e9;
+  font-size: .78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.kv-quick-options button:hover {
+  background: rgba(255,255,255,.1);
+}
+
+.kv-chat-form {
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  gap: 10px;
+  background: #151515;
+}
+
+.kv-chat-form input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.055);
+  color: #fff;
+  outline: none;
+  padding: 0 15px;
+}
+
+.kv-chat-form input::placeholder {
+  color: #888;
+}
+
+.kv-chat-form button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.kv-chat-form button:hover {
+  transform: translateY(-2px);
+}
+
+.kv-chat-form button svg {
+  width: 21px;
+  height: 21px;
+  fill: #111;
+}
+
+@keyframes kvPulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(255,255,255,.25),
+      0 18px 60px rgba(255,255,255,.12),
+      0 16px 42px rgba(0,0,0,.45);
+  }
+
+  70% {
+    box-shadow:
+      0 0 0 18px rgba(255,255,255,0),
+      0 18px 60px rgba(255,255,255,.12),
+      0 16px 42px rgba(0,0,0,.45);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(255,255,255,0),
+      0 18px 60px rgba(255,255,255,.12),
+      0 16px 42px rgba(0,0,0,.45);
+  }
+}
+
+@keyframes kvDot {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.18);
+  }
+}
+
+@keyframes kvCalloutIn {
+  from {
+    opacity: 0;
+    transform: translateX(14px) scale(.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes kvFloatText {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes kvWindowIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kvMsgIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes kvTyping {
+  0%, 80%, 100% {
+    opacity: .35;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 620px) {
+  .kv-chat-widget {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .kv-chat-float {
+    width: 64px;
+    height: 64px;
+  }
+
+  .kv-chat-float svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .kv-notification-dot {
+    width: 15px;
+    height: 15px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .kv-chat-callout {
+    right: 64px;
+    bottom: 8px;
+    height: 44px;
+    min-width: 132px;
+    padding: 0 14px;
+    font-size: .86rem;
+  }
+
+  .kv-chat-window {
+    position: fixed;
+    right: 12px;
+    left: 12px;
+    bottom: 82px;
+    width: auto;
+    height: min(500px, calc(100vh - 104px));
+    border-radius: 20px;
+  }
+}
+  </style>
+  <!-- KayVision Chat IA -->
+<div class="kv-chat-widget">
+  <div class="kv-chat-callout" id="kvChatCallout">
+    Fale conosco!
+  </div>
+
+  <button class="kv-chat-float" id="kvChatButton" aria-label="Abrir chat KayVision">
+    <span class="kv-notification-dot"></span>
+
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 15.5c0 .83-.67 1.5-1.5 1.5H8l-4 4v-15C4 5.17 4.67 4.5 5.5 4.5h13c.83 0 1.5.67 1.5 1.5v9.5Z"/>
+    </svg>
+  </button>
+
+  <div class="kv-chat-window" id="kvChatWindow">
+    <div class="kv-chat-header">
+      <div class="kv-agent">
+        <div class="kv-agent-avatar">
+          K
+          <span></span>
+        </div>
+
+        <div>
+          <strong>KayBot</strong>
+          <small>Assistente IA da KayVision</small>
+        </div>
+      </div>
+
+      <button class="kv-close" id="kvChatClose" aria-label="Fechar chat">×</button>
+    </div>
+
+    <div class="kv-chat-messages" id="kvChatMessages"></div>
+
+    <div class="kv-quick-options" id="kvQuickOptions">
+      <button data-message="Quero entender os planos da KayVision">Ver planos</button>
+      <button data-message="Tenho uma loja e quero medir o fluxo de pessoas">Tenho uma loja</button>
+      <button data-whatsapp-summary data-message="Quero falar pelo WhatsApp">Enviar resumo no WhatsApp</button>
+    </div>
+
+    <form class="kv-chat-form" id="kvChatForm">
+      <input
+        type="text"
+        id="kvChatInput"
+        placeholder="Digite sua mensagem..."
+        autocomplete="off"
+      >
+
+      <button type="submit" aria-label="Enviar mensagem">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 20.5 21 12 3 3.5v6.6L14 12 3 13.9v6.6Z"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+</body>
+</html>
