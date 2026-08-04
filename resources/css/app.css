@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #050505;
+    --bg-surface: #0a0a0c;
+    --bg-card: #121216;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(139, 92, 246, 0.3);
+    --purple-kaytech: #8B5CF6;
+    --purple-dark: #6D28D9;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: #f3f4f6;
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom Utilities */
+.bg-kaytech-dark {
+  background-color: #050505;
+}
+
+.bg-kaytech-card {
+  background-color: rgba(18, 18, 22, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glow-purple {
+  box-shadow: 0 0 30px -5px rgba(139, 92, 246, 0.25);
+}
+
+.glow-purple-sm {
+  box-shadow: 0 0 15px -3px rgba(139, 92, 246, 0.2);
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #ffffff 0%, #d8b4fe 60%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hide scrollbar for clean marquee */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===================================================================
+   Admin Theme Customizer utilities
+   All rules here are scoped to the admin panel only (via the
+   `admin-*` classes toggled on <html> by AdminThemeContext) and use
+   an `--admin-*` CSS variable namespace so nothing here ever affects
+   the public site's fixed dark/purple styling.
+   =================================================================== */
+:root {
+  --admin-sidebar-width: 16rem;
+  --admin-accent-color: #8b5cf6;
+  --admin-accent-contrast: #ffffff;
+  --admin-ui-radius: 0.75rem;
+  --admin-font-scale: 1;
+}
+
+.admin-ui-accent-bg {
+  background-color: var(--admin-accent-color) !important;
+}
+.admin-ui-accent-text {
+  color: var(--admin-accent-color) !important;
+}
+.admin-ui-accent-border {
+  border-color: var(--admin-accent-color) !important;
+}
+.admin-ui-accent-ring {
+  --tw-ring-color: var(--admin-accent-color) !important;
+}
+.admin-ui-accent-soft {
+  background-color: color-mix(in srgb, var(--admin-accent-color) 12%, transparent);
+  color: var(--admin-accent-color);
+}
+.admin-dark .admin-ui-accent-soft {
+  background-color: color-mix(in srgb, var(--admin-accent-color) 20%, transparent);
+}
+.admin-ui-accent-gradient {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--admin-accent-color) 92%, #ffffff 8%),
+    color-mix(in srgb, var(--admin-accent-color) 68%, #0f172a 32%)
+  );
+}
+
+.admin-ui-high-contrast {
+  filter: contrast(1.08);
+}
+
+.admin-ui-reduce-motion *,
+.admin-ui-reduce-motion *::before,
+.admin-ui-reduce-motion *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+.admin-ui-skin-bordered .shadow-sm,
+.admin-ui-skin-bordered .shadow-lg,
+.admin-ui-skin-bordered .shadow-xl,
+.admin-ui-skin-bordered .shadow-2xl {
+  box-shadow: none !important;
+}
+.admin-ui-skin-bordered .border {
+  border-color: rgb(161 161 170 / 0.45) !important;
+}
+
+.admin-ui-radius-soft .rounded-lg,
+.admin-ui-radius-soft .rounded-xl,
+.admin-ui-radius-soft .rounded-2xl {
+  border-radius: var(--admin-ui-radius) !important;
+}
+
+@media (min-width: 1024px) {
+  #admin-sidebar {
+    width: var(--admin-sidebar-width);
+    transition: width 0.3s ease;
+  }
+  #admin-main-content {
+    padding-left: var(--admin-sidebar-width);
+    transition: padding-left 0.3s ease;
+  }
+  .admin-ui-layout-rtl #admin-sidebar {
+    left: auto;
+    right: 0;
+  }
+  .admin-ui-layout-rtl #admin-main-content {
+    padding-left: 0;
+    padding-right: var(--admin-sidebar-width);
+  }
+}
