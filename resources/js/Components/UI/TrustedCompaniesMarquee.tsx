@@ -22,21 +22,18 @@ export const TrustedCompaniesMarquee: React.FC<TrustedCompaniesMarqueeProps> = (
     const marqueeItems = [...displayCompanies, ...displayCompanies, ...displayCompanies, ...displayCompanies];
 
     return (
-        <section className="bg-[#050505] py-16 border-y border-white/5 relative overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 text-center">
-                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                    {t('home.trusted_companies_title', 'Empresas que confiam na KayTech')}
-                </h3>
-                <p className="text-sm text-gray-400 mt-1">
-                    {t('home.trusted_companies_desc', 'Soluções desenvolvidas para operações reais.')}
-                </p>
+        <section className="relative overflow-hidden border-y border-white/10 py-16">
+            <div className="mx-auto mb-10 max-w-5xl px-6 text-center">
+                <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/35">
+                    …/ {t('home.trusted_companies_title', 'Empresas que confiam na KayTech')}
+                </span>
             </div>
 
             {/* Infinite Marquee Container with Side Masks */}
             <div className="relative w-full overflow-hidden">
                 {/* Side Fade Gradient Masks */}
-                <div className="absolute top-0 bottom-0 left-0 w-24 sm:w-48 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-24 sm:w-48 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#0d0d0d] to-transparent sm:w-48" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#0d0d0d] to-transparent sm:w-48" />
 
                 {prefersReducedMotion ? (
                     <div className="flex flex-wrap items-center justify-center gap-14 px-4">

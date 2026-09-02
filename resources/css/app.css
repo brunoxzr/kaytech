@@ -1,5 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400..800;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Inter:wght@400;500;600&display=swap');
 @import "tailwindcss";
+
+/*
+  Sistema tipográfico (landings públicas):
+  - mono  → JetBrains Mono: a máquina. Títulos gigantes 800, labels 500 tracked.
+  - serif → Newsreader: a voz. Corpo de leitura + ênfases em itálico.
+  O contraste mono↔serif É o design.
+*/
+@theme {
+  --font-display: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-serif: 'Newsreader', ui-serif, Georgia, serif;
+  --font-body: 'Newsreader', ui-serif, Georgia, serif;
+  /* sans = admin (UI operacional, não editorial) */
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
 
 @layer base {
   :root {
@@ -7,26 +22,99 @@
     --bg-surface: #0a0a0c;
     --bg-card: #121216;
     --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-glow: rgba(139, 92, 246, 0.3);
-    --purple-kaytech: #8B5CF6;
-    --purple-dark: #6D28D9;
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-body: 'Inter', system-ui, sans-serif;
+    /* P&B com viés quente — não cinza morto */
+    --ink: #0d0d0c;
+    --paper: #ECEAE5;
+    --fg: #F4F2ED;
+    --fg-dim: #8C8A83;
+    --rule: rgba(244, 242, 237, 0.12);
   }
 
   body {
-    background-color: var(--bg-main);
-    color: #f3f4f6;
-    font-family: var(--font-body);
+    background-color: var(--ink);
+    color: var(--fg);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.6;
     overflow-x: hidden;
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.045em;
+    font-weight: 800;
   }
+
+  /* Ênfase editorial: itálico serifado no meio do texto mono/label */
+  .say {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  ::selection { background: var(--fg); color: var(--ink); }
 }
+
+/* ===================================================================
+   Site público — tema claro opcional.
+   O escuro é o padrão (classes Tailwind hardcoded nas páginas).
+   Quando <html data-site-theme="light">, remapeamos as utilities de
+   cor mais usadas para papel off-white + tinta quente. Sem tocar admin.
+   =================================================================== */
+html[data-site-theme="light"] {
+  --ink: #ECEAE5;
+  --fg: #16150F;
+  --fg-dim: #5A584E;
+  --rule: rgba(22, 21, 15, 0.14);
+  color-scheme: light;
+}
+html[data-site-theme="light"] body { background-color: var(--ink); color: var(--fg); }
+
+html[data-site-theme="light"] .bg-\[\#0d0d0d\],
+html[data-site-theme="light"] .bg-\[\#0a0a0a\],
+html[data-site-theme="light"] .bg-black { background-color: var(--ink) !important; }
+html[data-site-theme="light"] .bg-\[\#0d0d0d\]\/85,
+html[data-site-theme="light"] .bg-\[\#0d0d0d\]\/90,
+html[data-site-theme="light"] .bg-\[\#0d0d0d\]\/70,
+html[data-site-theme="light"] .bg-\[\#0d0d0d\]\/60 { background-color: color-mix(in srgb, var(--ink) 85%, transparent) !important; }
+html[data-site-theme="light"] .bg-\[\#111\] { background-color: #E3E0D8 !important; }
+
+html[data-site-theme="light"] .text-white { color: var(--fg) !important; }
+html[data-site-theme="light"] .text-white\/80,
+html[data-site-theme="light"] .text-white\/75,
+html[data-site-theme="light"] .text-white\/70 { color: color-mix(in srgb, var(--fg) 88%, transparent) !important; }
+html[data-site-theme="light"] .text-white\/60,
+html[data-site-theme="light"] .text-white\/55,
+html[data-site-theme="light"] .text-white\/50 { color: color-mix(in srgb, var(--fg) 68%, transparent) !important; }
+html[data-site-theme="light"] .text-white\/45,
+html[data-site-theme="light"] .text-white\/40,
+html[data-site-theme="light"] .text-white\/35,
+html[data-site-theme="light"] .text-white\/30,
+html[data-site-theme="light"] .text-white\/25 { color: color-mix(in srgb, var(--fg) 48%, transparent) !important; }
+
+html[data-site-theme="light"] [class*="border-white/"] { border-color: var(--rule) !important; }
+html[data-site-theme="light"] [class*="bg-white/1"],
+html[data-site-theme="light"] [class*="bg-white/5"],
+html[data-site-theme="light"] [class*="bg-white/8"] { background-color: rgba(22,21,15,0.05) !important; }
+html[data-site-theme="light"] .border-white,
+html[data-site-theme="light"] .border-b-2.border-white { border-color: var(--fg) !important; }
+
+/* gradientes/máscaras do marquee */
+html[data-site-theme="light"] .from-\[\#0d0d0d\] { --tw-gradient-from: var(--ink) !important; }
+
+/* barra de rolagem */
+html[data-site-theme="light"] { scrollbar-color: #B9B5AA var(--ink); }
+
+/* logo KayTech é branca — no tema claro, inverte para ficar preta */
+html[data-site-theme="light"] img[src*="logo-kaytech"] { filter: invert(1); }
+/* máscaras do marquee no claro */
+html[data-site-theme="light"] [class*="from-[#0d0d0d]"] { --tw-gradient-from: var(--ink) var(--tw-gradient-from-position) !important; }
+html[data-site-theme="light"] [class*="to-transparent"] { --tw-gradient-to: transparent var(--tw-gradient-to-position) !important; }
+/* imagens grayscale continuam ok; fotos ganham leve contraste no claro */
+html[data-site-theme="light"] .grayscale { filter: grayscale(1) contrast(1.05) brightness(0.96); }
 
 /* Custom Utilities */
 .bg-kaytech-dark {
@@ -62,92 +150,143 @@
   scrollbar-width: none;
 }
 
+
 /* ===================================================================
-   Admin Theme Customizer utilities
-   All rules here are scoped to the admin panel only (via the
-   `admin-*` classes toggled on <html> by AdminThemeContext) and use
-   an `--admin-*` CSS variable namespace so nothing here ever affects
-   the public site's fixed dark/purple styling.
+   Admin — Sistema Mestre UI/UX (iResult): P&B silencioso, claro + dark.
+   Tokens semânticos + utilitários ui-*. Escopo: <html data-admin-theme>.
+   Nada aqui afeta o site público.
    =================================================================== */
 :root {
-  --admin-sidebar-width: 16rem;
-  --admin-accent-color: #8b5cf6;
-  --admin-accent-contrast: #ffffff;
-  --admin-ui-radius: 0.75rem;
-  --admin-font-scale: 1;
+  /* CLARO (padrão) — sem branco puro */
+  --ui-canvas: #F2F2F2;
+  --ui-surface: #F7F7F7;
+  --ui-subtle: #ECECEC;
+  --ui-muted: #E3E3E3;
+  --ui-border: #D6D6D6;
+  --ui-border-strong: #C2C2C2;
+  --ui-text: #1A1A1A;
+  --ui-text-soft: #565656;
+  --ui-text-faint: #8A8A8A;
+  --ui-primary: #1A1A1A;          /* ação primária = quase-preto */
+  --ui-primary-contrast: #F7F7F7;
+  --ui-pos: #1F7A3D;
+  --ui-neg: #B23636;
+  --ui-sidebar-width: 15rem;
+  --font-size-body: 13px;
 }
 
-.admin-ui-accent-bg {
-  background-color: var(--admin-accent-color) !important;
-}
-.admin-ui-accent-text {
-  color: var(--admin-accent-color) !important;
-}
-.admin-ui-accent-border {
-  border-color: var(--admin-accent-color) !important;
-}
-.admin-ui-accent-ring {
-  --tw-ring-color: var(--admin-accent-color) !important;
-}
-.admin-ui-accent-soft {
-  background-color: color-mix(in srgb, var(--admin-accent-color) 12%, transparent);
-  color: var(--admin-accent-color);
-}
-.admin-dark .admin-ui-accent-soft {
-  background-color: color-mix(in srgb, var(--admin-accent-color) 20%, transparent);
-}
-.admin-ui-accent-gradient {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--admin-accent-color) 92%, #ffffff 8%),
-    color-mix(in srgb, var(--admin-accent-color) 68%, #0f172a 32%)
-  );
+html[data-admin-theme="dark"] {
+  --ui-canvas: #0E0E0E;
+  --ui-surface: #161616;
+  --ui-subtle: #1C1C1C;
+  --ui-muted: #232323;
+  --ui-border: #2A2A2A;
+  --ui-border-strong: #383838;
+  --ui-text: #EDEDED;
+  --ui-text-soft: #A6A6A6;
+  --ui-text-faint: #6E6E6E;
+  --ui-primary: #EDEDED;
+  --ui-primary-contrast: #161616;
+  --ui-pos: #4ADE80;
+  --ui-neg: #F87171;
 }
 
-.admin-ui-high-contrast {
-  filter: contrast(1.08);
+/* Quando o admin está montado, ele é dono do documento inteiro (html+body),
+   senão o fundo escuro do site público vaza por trás do painel. */
+html[data-admin-theme],
+html[data-admin-theme] body {
+  background-color: var(--ui-canvas);
+  color-scheme: light;
+}
+html[data-admin-theme="dark"],
+html[data-admin-theme="dark"] body {
+  color-scheme: dark;
 }
 
-.admin-ui-reduce-motion *,
-.admin-ui-reduce-motion *::before,
-.admin-ui-reduce-motion *::after {
-  scroll-behavior: auto !important;
-  transition-duration: 0.01ms !important;
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
+.ui-root {
+  min-height: 100vh;
+  background-color: var(--ui-canvas);
+  color: var(--ui-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  line-height: 20px;
+}
+.ui-root h1, .ui-root h2, .ui-root h3, .ui-root h4 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
 }
 
-.admin-ui-skin-bordered .shadow-sm,
-.admin-ui-skin-bordered .shadow-lg,
-.admin-ui-skin-bordered .shadow-xl,
-.admin-ui-skin-bordered .shadow-2xl {
-  box-shadow: none !important;
+/* superfícies */
+.ui-canvas   { background-color: var(--ui-canvas); }
+.ui-surface  { background-color: var(--ui-surface); }
+.ui-subtle   { background-color: var(--ui-subtle); }
+.ui-panel {
+  background-color: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
 }
-.admin-ui-skin-bordered .border {
-  border-color: rgb(161 161 170 / 0.45) !important;
+.ui-divide > * + * { border-top: 1px solid var(--ui-border); }
+
+/* texto */
+.ui-t        { color: var(--ui-text); }
+.ui-t-soft   { color: var(--ui-text-soft); }
+.ui-t-faint  { color: var(--ui-text-faint); }
+.ui-pos      { color: var(--ui-pos); }
+.ui-neg      { color: var(--ui-neg); }
+
+/* bordas */
+.ui-b        { border-color: var(--ui-border); }
+.ui-b-strong { border-color: var(--ui-border-strong); }
+
+/* controles */
+.ui-input {
+  width: 100%;
+  background-color: var(--ui-canvas);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: var(--font-size-body);
+  color: var(--ui-text);
+  transition: border-color .15s;
+}
+.ui-input::placeholder { color: var(--ui-text-faint); }
+.ui-input:focus { outline: none; border-color: var(--ui-text); }
+
+.ui-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 10px; padding: 8px 16px;
+  font-size: var(--font-size-body); font-weight: 500;
+  border: 1px solid transparent; transition: all .15s; cursor: pointer;
+}
+.ui-btn-primary { background-color: var(--ui-primary); color: var(--ui-primary-contrast); }
+.ui-btn-primary:hover { opacity: .9; }
+.ui-btn-ghost { background-color: transparent; color: var(--ui-text-soft); border-color: var(--ui-border-strong); }
+.ui-btn-ghost:hover { background-color: var(--ui-subtle); color: var(--ui-text); }
+.ui-btn-danger { background-color: transparent; color: var(--ui-neg); border-color: var(--ui-border-strong); }
+.ui-btn-danger:hover { background-color: var(--ui-subtle); }
+
+/* tabela */
+.ui-table { width: 100%; font-size: var(--font-size-body); }
+.ui-table thead th {
+  text-align: left; padding: 10px 14px;
+  font-weight: 500; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ui-text-faint); border-bottom: 1px solid var(--ui-border);
+}
+.ui-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--ui-border); color: var(--ui-text-soft); }
+.ui-table tbody tr:hover td { background-color: var(--ui-subtle); }
+.ui-table tbody tr:last-child td { border-bottom: 0; }
+
+/* chip / badge */
+.ui-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 999px; padding: 2px 9px;
+  font-size: 11px; border: 1px solid var(--ui-border-strong); color: var(--ui-text-soft);
 }
 
-.admin-ui-radius-soft .rounded-lg,
-.admin-ui-radius-soft .rounded-xl,
-.admin-ui-radius-soft .rounded-2xl {
-  border-radius: var(--admin-ui-radius) !important;
-}
-
-@media (min-width: 1024px) {
-  #admin-sidebar {
-    width: var(--admin-sidebar-width);
-    transition: width 0.3s ease;
-  }
-  #admin-main-content {
-    padding-left: var(--admin-sidebar-width);
-    transition: padding-left 0.3s ease;
-  }
-  .admin-ui-layout-rtl #admin-sidebar {
-    left: auto;
-    right: 0;
-  }
-  .admin-ui-layout-rtl #admin-main-content {
-    padding-left: 0;
-    padding-right: var(--admin-sidebar-width);
-  }
+/* shell */
+@media (min-width: 768px) {
+  #admin-sidebar { width: var(--ui-sidebar-width); }
+  #admin-main-content { padding-left: var(--ui-sidebar-width); }
+  #admin-sidebar.is-collapsed { width: 3.75rem; }
+  #admin-main-content.is-collapsed { padding-left: 3.75rem; }
 }

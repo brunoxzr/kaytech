@@ -236,5 +236,8 @@ class DatabaseSeeder extends Seeder
         // 5. Site Settings
         SiteSetting::updateOrCreate(['key' => 'whatsapp_url'], ['value' => 'https://wa.me/5543999999999']);
         SiteSetting::updateOrCreate(['key' => 'contact_email'], ['value' => 'bruno.kay2304@gmail.com']);
+
+        // 6. Finanças — contas e categorias padrão
+        $this->call(FinanceSeeder::class);
     }
 }

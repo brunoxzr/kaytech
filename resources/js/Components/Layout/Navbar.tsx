@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n';
 import { Locale, SUPPORTED_LOCALES } from '../../i18n/types';
-import { Globe, Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
+import { useSiteTheme } from '../../Hooks/useSiteTheme';
 
 interface NavbarProps {
     visible?: boolean;
 }
 
 const NAV_ITEMS: { id: string; key: string; fallback: string }[] = [
-    { id: 'inicio', key: 'navigation.home', fallback: 'Início' },
     { id: 'projetos', key: 'navigation.projects', fallback: 'Projetos' },
     { id: 'servicos', key: 'navigation.services', fallback: 'Serviços' },
     { id: 'sobre', key: 'navigation.about', fallback: 'Sobre' },
-    { id: 'contato', key: 'navigation.contact', fallback: 'Contato' },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({ visible = true }) => {
     const { t, locale } = useTranslation();
+    const { theme, toggle: toggleTheme } = useSiteTheme();
     const [scrolled, setScrolled] = useState<boolean>(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
     const [langDropdownOpen, setLangDropdownOpen] = useState<boolean>(false);
@@ -64,89 +64,50 @@ export const Navbar: React.FC<NavbarProps> = ({ visible = true }) => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                scrolled ? 'bg-[#050505]/90 backdrop-blur-md border-b border-white/10 py-4' : 'py-6'
+            className={`fixed top-0 left-0 right-0 z-50 font-mono transition-all duration-300 ${
+                scrolled ? 'bg-[#0d0d0d]/90 backdrop-blur-md border-b border-white/10 py-4' : 'py-5'
             }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                {/* Logo — plain wordmark, no card */}
-                <a href={`/${locale}`} className="flex items-center gap-3 group">
-                    <img
-                        src="/images/logo-kaytech.png"
-                        alt="KayTech Solutions"
-                        className="h-8 w-auto object-contain"
-                    />
-                    <span className="font-bold text-lg text-white tracking-tight">
-                        KayTech<span className="text-purple-500">.</span>
-                    </span>
+            <div className="max-w-6xl mx-auto px-6 flex items-center justify-between gap-8">
+                {/* Logo */}
+                <a href={`/${locale}`} className="flex shrink-0 items-center gap-2.5">
+                    <img src="/images/logo-kaytech.png" alt="KayTech" className="h-10 w-auto object-contain" />
+                    <span className="text-sm font-semibold tracking-tight text-white">KayTech</span>
                 </a>
 
-                {/* Desktop Navigation — plain text links, single underline for active state */}
-                <div className="hidden md:flex items-center gap-9">
+                {/* Direita — links + tema + CTA */}
+                <div className="hidden md:flex items-center gap-7">
                     {NAV_ITEMS.map((item) => (
                         <button
                             key={item.id}
                             onClick={() => scrollToAnchor(item.id)}
-                            className={`relative text-sm font-medium transition py-1 ${
-                                activeSection === item.id ? 'text-white' : 'text-gray-500 hover:text-white'
+                            className={`text-[13px] transition ${
+                                activeSection === item.id ? 'text-white' : 'text-white/45 hover:text-white'
                             }`}
                         >
                             {t(item.key, item.fallback)}
-                            {activeSection === item.id && (
-                                <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-purple-500" />
-                            )}
                         </button>
                     ))}
-                </div>
-
-                {/* Right Actions: Language Switcher & CTA */}
-                <div className="hidden md:flex items-center gap-6">
-                    <div className="relative">
-                        <button
-                            onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-gray-400 hover:text-white transition"
-                        >
-                            <Globe className="w-3.5 h-3.5" />
-                            <span>{locale}</span>
-                        </button>
-
-                        {langDropdownOpen && (
-                            <div className="absolute right-0 mt-3 w-40 bg-[#0a0a0f] border border-white/10 rounded-xl shadow-2xl py-1 z-50">
-                                {SUPPORTED_LOCALES.map((loc) => (
-                                    <button
-                                        key={loc.code}
-                                        onClick={() => changeLanguage(loc.code)}
-                                        className={`w-full text-left px-4 py-2 text-xs transition flex items-center justify-between ${
-                                            locale === loc.code ? 'text-purple-400 font-bold' : 'text-gray-300 hover:text-white'
-                                        }`}
-                                    >
-                                        <span>{loc.label}</span>
-                                        <span className="text-[10px] text-gray-500 font-mono">{loc.shortLabel}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
+                    <button
+                        onClick={toggleTheme}
+                        aria-label={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+                        className="text-white/45 transition hover:text-white"
+                    >
+                        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </button>
                     <button
                         onClick={() => scrollToAnchor('contato')}
-                        className="group bg-white text-black font-semibold text-xs px-5 py-2.5 rounded-full transition-transform duration-300 hover:scale-[1.04] flex items-center gap-2"
+                        className="border border-white/25 px-4 py-1.5 text-[13px] font-medium text-white transition hover:border-white"
                     >
-                        <span>{t('navigation.request_project', 'Solicitar Projeto')}</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        {t('navigation.request_project', 'Solicitar projeto')}
                     </button>
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <div className="flex items-center gap-3 md:hidden">
-                    <button
-                        onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                        className="flex items-center gap-1 text-xs font-mono text-gray-400"
-                    >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span>{locale}</span>
+                <div className="flex items-center gap-1 md:hidden">
+                    <button onClick={toggleTheme} className="p-2 text-white" aria-label="Alternar tema">
+                        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
-
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         className="p-2 text-white"
@@ -160,26 +121,26 @@ export const Navbar: React.FC<NavbarProps> = ({ visible = true }) => {
 
             {/* Mobile Menu Drawer */}
             {mobileMenuOpen && (
-                <div className="md:hidden bg-[#050505] border-t border-white/10 px-6 py-8 space-y-1">
+                <div className="md:hidden border-t border-white/10 bg-[#0d0d0d] px-6 py-8">
                     {NAV_ITEMS.map((item) => (
                         <button
                             key={item.id}
                             onClick={() => scrollToAnchor(item.id)}
-                            className="block w-full text-left py-3.5 text-2xl font-bold text-white/90 hover:text-purple-400 transition-colors border-b border-white/5"
+                            className="block w-full border-b border-white/5 py-4 text-left font-mono text-xl font-medium text-white/85 transition hover:text-white"
                         >
                             {t(item.key, item.fallback)}
                         </button>
                     ))}
 
-                    <div className="pt-6 flex flex-col gap-4">
-                        <div className="flex items-center justify-between text-xs text-gray-500 font-mono uppercase tracking-wider">
+                    <div className="mt-6 flex flex-col gap-5">
+                        <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-white/35">
                             <span>Idioma</span>
                             <div className="flex gap-3">
                                 {SUPPORTED_LOCALES.map((loc) => (
                                     <button
                                         key={loc.code}
                                         onClick={() => changeLanguage(loc.code)}
-                                        className={locale === loc.code ? 'text-purple-400 font-bold' : 'text-gray-500'}
+                                        className={locale === loc.code ? 'text-white' : 'text-white/40'}
                                     >
                                         {loc.shortLabel}
                                     </button>
@@ -189,10 +150,13 @@ export const Navbar: React.FC<NavbarProps> = ({ visible = true }) => {
 
                         <button
                             onClick={() => scrollToAnchor('contato')}
-                            className="w-full bg-white text-black font-semibold text-sm py-3.5 rounded-full text-center"
+                            className="w-full border border-white py-3 text-center text-[13px] font-medium text-white"
                         >
-                            {t('navigation.request_project', 'Solicitar Projeto')}
+                            {t('navigation.request_project', 'Solicitar projeto')}
                         </button>
+                        <a href="/admin/login" className="text-center text-[11px] uppercase tracking-wider text-white/30">
+                            Acesso administrativo
+                        </a>
                     </div>
                 </div>
             )}

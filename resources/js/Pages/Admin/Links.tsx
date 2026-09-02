@@ -83,7 +83,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
             headerAction={
                 <button
                     onClick={() => { reset(); setData('group', activeGroup); setEditingLink(null); setModalOpen(true); }}
-                    className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2"
+                    className="ui-btn ui-btn-primary ui-t font-semibold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     <span>Novo Link</span>
@@ -97,8 +97,8 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                     <button
                         key={g.value}
                         onClick={() => switchGroup(g.value)}
-                        className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider transition ${
-                            activeGroup === g.value ? 'bg-purple-600 text-white font-bold' : 'bg-white/5 text-gray-400 hover:text-white'
+                        className={`px-4 py-2 rounded-lg text-xs  uppercase tracking-wider transition ${
+                            activeGroup === g.value ? ' ui-t font-medium' : 'ui-subtle ui-t-soft hover:ui-t'
                         }`}
                     >
                         {g.label}
@@ -106,33 +106,33 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                 ))}
             </div>
 
-            <div className="bg-[#0a0a0f] border border-white/10 rounded-2xl p-6 space-y-4">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Aparência da página</h2>
+            <div className="ui-surface border ui-b rounded-xl p-6 space-y-4">
+                <h2 className="text-sm font-medium ui-t uppercase tracking-wider">Aparência da página</h2>
                 <form onSubmit={handleSaveSettings} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Nome de Exibição</label>
+                        <label className="block text-xs  uppercase ui-t-soft mb-1">Nome de Exibição</label>
                         <input
                             type="text"
                             value={settingsData.display_name}
                             onChange={(e) => setSettingsData('display_name', e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                            className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Cor de Fundo</label>
+                        <label className="block text-xs  uppercase ui-t-soft mb-1">Cor de Fundo</label>
                         <div className="flex items-center gap-2">
                             <input
                                 type="color"
                                 value={settingsData.background_color || '#050505'}
                                 onChange={(e) => setSettingsData('background_color', e.target.value)}
-                                className="w-10 h-10 bg-transparent border border-white/10 rounded-lg cursor-pointer"
+                                className="w-10 h-10 bg-transparent border ui-b rounded-lg cursor-pointer"
                             />
                             <input
                                 type="text"
                                 placeholder="#050505"
                                 value={settingsData.background_color}
                                 onChange={(e) => setSettingsData('background_color', e.target.value)}
-                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                className="flex-1 ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                             />
                         </div>
                     </div>
@@ -149,7 +149,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                         folder="links"
                     />
                     <div className="sm:col-span-2">
-                        <label className="block text-xs font-mono uppercase text-gray-400 mb-1">
+                        <label className="block text-xs  uppercase ui-t-soft mb-1">
                             {activeGroup === 'brunokay' ? 'Sobre mim' : 'Bio'}
                         </label>
                         <textarea
@@ -157,14 +157,14 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                             value={settingsData.bio}
                             onChange={(e) => setSettingsData('bio', e.target.value)}
                             placeholder={activeGroup === 'brunokay' ? 'Conte sobre você: experiência, o que faz, sua trajetória...' : undefined}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                            className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                         />
                     </div>
                     <div className="sm:col-span-2">
                         <button
                             type="submit"
                             disabled={savingSettings}
-                            className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold py-2.5 px-6 rounded-xl transition text-xs uppercase font-mono"
+                            className="ui-btn ui-btn-primary disabled:opacity-50 ui-t font-medium py-2.5 px-6 rounded-xl transition text-xs uppercase "
                         >
                             Salvar Aparência
                         </button>
@@ -174,20 +174,20 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
 
             <div className="space-y-3">
                 {filteredLinks.length === 0 && (
-                    <p className="text-sm text-gray-500">Nenhum link cadastrado neste grupo ainda.</p>
+                    <p className="text-sm ui-t-faint">Nenhum link cadastrado neste grupo ainda.</p>
                 )}
                 {filteredLinks.map((link) => (
-                    <div key={link.id} className="bg-[#0a0a0f] border border-white/10 rounded-2xl p-5 flex items-center justify-between gap-4">
+                    <div key={link.id} className="ui-surface border ui-b rounded-xl p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4 min-w-0">
-                            <span className="text-xs font-mono text-gray-600 shrink-0">{String(link.order).padStart(2, '0')}</span>
+                            <span className="text-xs  ui-t-faint shrink-0">{String(link.order).padStart(2, '0')}</span>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-bold text-white truncate">{link.title}</span>
-                                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded shrink-0 ${link.active ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                                    <span className="font-medium ui-t truncate">{link.title}</span>
+                                    <span className={`text-[10px]  px-2 py-0.5 rounded shrink-0 ${link.active ? 'ui-subtle ui-pos' : 'ui-subtle ui-t-faint'}`}>
                                         {link.active ? 'ATIVO' : 'INATIVO'}
                                     </span>
                                 </div>
-                                <span className="text-xs text-gray-500 truncate block">{link.url}</span>
+                                <span className="text-xs ui-t-faint truncate block">{link.url}</span>
                             </div>
                         </div>
 
@@ -205,13 +205,13 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                                     });
                                     setModalOpen(true);
                                 }}
-                                className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg"
+                                className="p-2 ui-subtle hover:ui-subtle ui-t rounded-lg"
                             >
                                 <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => { if (confirm('Remover este link?')) destroy(`/admin/links/${link.id}`); }}
-                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg"
+                                className="p-2 ui-subtle hover:bg-red-500/20 ui-neg rounded-lg"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -221,22 +221,22 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
             </div>
 
             {modalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0d0d14] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-6">
-                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                            <h2 className="text-xl font-bold text-white">
+                <div className="fixed inset-0 black/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="ui-surface border ui-b rounded-xl p-6 sm:p-8 max-w-md w-full space-y-6">
+                        <div className="flex items-center justify-between border-b ui-b pb-4">
+                            <h2 className="text-xl font-medium ui-t">
                                 {editingLink ? 'Editar Link' : 'Novo Link'}
                             </h2>
-                            <button onClick={() => setModalOpen(false)} className="text-gray-400 font-mono">✕</button>
+                            <button onClick={() => setModalOpen(false)} className="ui-t-soft ">✕</button>
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Grupo</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">Grupo</label>
                                 <select
                                     value={data.group}
                                     onChange={(e) => setData('group', e.target.value as LinkGroup)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 >
                                     {GROUPS.map((g) => (
                                         <option key={g.value} value={g.value}>{g.label}</option>
@@ -244,56 +244,56 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Título</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">Título</label>
                                 <input
                                     type="text"
                                     required
                                     value={data.title}
                                     onChange={(e) => setData('title', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">URL</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">URL</label>
                                 <input
                                     type="text"
                                     required
                                     value={data.url}
                                     onChange={(e) => setData('url', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Ícone (opcional)</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">Ícone (opcional)</label>
                                 <input
                                     type="text"
                                     placeholder="Globe, Mail, MessageCircle, Phone, Send, AtSign, Camera, Video, Music, Store, Briefcase"
                                     value={data.icon_name}
                                     onChange={(e) => setData('icon_name', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 />
                             </div>
                             <div className="flex items-center gap-3">
-                                <label className="block text-xs font-mono uppercase text-gray-400">Ordem</label>
+                                <label className="block text-xs  uppercase ui-t-soft">Ordem</label>
                                 <input
                                     type="number"
                                     value={data.order}
                                     onChange={(e) => setData('order', parseInt(e.target.value) || 0)}
-                                    className="w-24 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                                    className="w-24 ui-subtle border ui-b rounded-xl px-4 py-2 text-xs ui-t"
                                 />
-                                <label className="flex items-center gap-2 text-xs text-gray-300 ml-auto">
+                                <label className="flex items-center gap-2 text-xs ui-t-soft ml-auto">
                                     <input
                                         type="checkbox"
                                         checked={data.active}
                                         onChange={(e) => setData('active', e.target.checked)}
-                                        className="accent-purple-600"
+                                        className="accent-[var(--ui-text)]"
                                     />
                                     Ativo
                                 </label>
                             </div>
                             <button
                                 type="submit"
-                                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition text-xs uppercase font-mono"
+                                className="w-full ui-btn ui-btn-primary font-medium py-3.5 rounded-xl transition text-xs uppercase "
                             >
                                 Salvar Link
                             </button>

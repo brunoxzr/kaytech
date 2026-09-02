@@ -11,6 +11,7 @@ class ContactLead extends Model
 
     protected $fillable = [
         'name',
+        'subject',
         'company',
         'email',
         'phone',
@@ -18,5 +19,6 @@ class ContactLead extends Model
         'budget_range',
         'message',
         'status',
+        'source',
     ];
 }

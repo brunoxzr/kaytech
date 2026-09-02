@@ -21,28 +21,28 @@ export default function AdminSettings({ settings, driver }: SettingsProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white p-6 sm:p-10 space-y-8">
+        <div className="min-h-screen ui-canvas ui-t p-6 sm:p-10 space-y-8">
             <Head title="Configurações — Admin KayTech" />
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Configurações Globais</h1>
-                    <p className="text-xs text-gray-400 mt-1">Ajuste links de contato, e-mail e provedor de tradução</p>
+                    <h1 className="text-3xl font-semibold ui-t tracking-tight">Configurações Globais</h1>
+                    <p className="text-xs ui-t-soft mt-1">Ajuste links de contato, e-mail e provedor de tradução</p>
                 </div>
 
-                <Link href="/admin" className="text-xs text-gray-400 hover:text-white font-mono">← Dashboard</Link>
+                <Link href="/admin" className="text-xs ui-t-soft hover:ui-t ">← Dashboard</Link>
             </div>
 
-            <div className="max-w-2xl bg-[#0a0a0f] border border-white/10 rounded-3xl p-8 space-y-6">
+            <div className="max-w-2xl ui-surface border ui-b rounded-xl p-8 space-y-6">
                 {recentlySuccessful && (
-                    <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-mono">
+                    <div className="p-4 rounded-xl ui-subtle border border-green-500/30 ui-pos text-xs ">
                         ✓ Configurações atualizadas com sucesso!
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-mono uppercase text-gray-300 mb-2">
+                        <label className="block text-xs  uppercase ui-t-soft mb-2">
                             URL do WhatsApp (VITE_WHATSAPP_URL)
                         </label>
                         <input
@@ -50,12 +50,12 @@ export default function AdminSettings({ settings, driver }: SettingsProps) {
                             required
                             value={data.whatsapp_url}
                             onChange={(e) => setData('whatsapp_url', e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            className="w-full ui-subtle border ui-b rounded-xl px-4 py-3 text-sm ui-t "
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-mono uppercase text-gray-300 mb-2">
+                        <label className="block text-xs  uppercase ui-t-soft mb-2">
                             E-mail Corporativo de Contato
                         </label>
                         <input
@@ -63,26 +63,26 @@ export default function AdminSettings({ settings, driver }: SettingsProps) {
                             required
                             value={data.contact_email}
                             onChange={(e) => setData('contact_email', e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono"
+                            className="w-full ui-subtle border ui-b rounded-xl px-4 py-3 text-sm ui-t "
                         />
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-                        <span className="text-xs font-mono uppercase text-purple-400 font-bold block">
+                    <div className="p-4 rounded-xl ui-surface border ui-b space-y-2">
+                        <span className="text-xs  uppercase ui-t-soft font-medium block">
                             Provedor de Tradução Automática (TRANSLATION_DRIVER)
                         </span>
-                        <p className="text-xs text-gray-400 font-mono">
-                            Provedor ativo no servidor: <strong className="text-white uppercase">{driver || 'deepl'}</strong>
+                        <p className="text-xs ui-t-soft ">
+                            Provedor ativo no servidor: <strong className="ui-t uppercase">{driver || 'deepl'}</strong>
                         </p>
-                        <p className="text-[11px] text-gray-500">
-                            Pode ser alternado em <code className="text-gray-400">config/translation.php</code> ou via <code className="text-gray-400">TRANSLATION_DRIVER=deepl|google|openai</code> no arquivo <code className="text-gray-400">.env</code>.
+                        <p className="text-[11px] ui-t-faint">
+                            Pode ser alternado em <code className="ui-t-soft">config/translation.php</code> ou via <code className="ui-t-soft">TRANSLATION_DRIVER=deepl|google|openai</code> no arquivo <code className="ui-t-soft">.env</code>.
                         </p>
                     </div>
 
                     <button
                         type="submit"
                         disabled={processing}
-                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition text-xs font-mono uppercase shadow-lg shadow-purple-600/30"
+                        className="w-full ui-btn ui-btn-primary font-medium py-3.5 rounded-xl transition text-xs  uppercase "
                     >
                         Salvar Configurações
                     </button>

@@ -15,14 +15,18 @@ class Project extends Model
         'cover',
         'gallery',
         'project_url',
+        'extra_links',
         'featured',
+        'show_on_bruno_profile',
         'order',
     ];
 
     protected $casts = [
         'technologies' => 'array',
         'gallery' => 'array',
+        'extra_links' => 'array',
         'featured' => 'boolean',
+        'show_on_bruno_profile' => 'boolean',
     ];
 
     public function translations(): HasMany
@@ -57,7 +61,9 @@ class Project extends Model
             'cover' => $this->cover,
             'gallery' => $this->gallery ?? [],
             'projectUrl' => $this->project_url,
+            'extraLinks' => $this->extra_links ?? [],
             'featured' => (bool)$this->featured,
+            'showOnBrunoProfile' => (bool)$this->show_on_bruno_profile,
             'order' => (int)$this->order,
             'translation_status' => $trans?->translation_status ?? 'published',
             'translations' => $this->translations->keyBy('locale')->toArray(),

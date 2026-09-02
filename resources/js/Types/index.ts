@@ -37,9 +37,21 @@ export type Project = {
     cover: string;
     gallery?: string[];
     projectUrl?: string;
+    extraLinks?: { label: string; url: string }[];
     featured: boolean;
+    showOnBrunoProfile?: boolean;
     order: number;
     translations?: Record<Locale, ProjectTranslation>;
+};
+
+export type CareerMilestone = {
+    id: number;
+    year: string;
+    title: string;
+    description: string;
+    technologies?: string[] | null;
+    icon_name?: string | null;
+    order: number;
 };
 
 export type ServiceTranslation = {
@@ -90,7 +102,34 @@ export type LinkPageSetting = {
     background_image?: string | null;
     profile_image?: string | null;
     display_name?: string | null;
+    role_tagline?: string | null;
+    hero_title?: string | null;
+    hero_description?: string | null;
     bio?: string | null;
+    stat_1_value?: string | null;
+    stat_1_label?: string | null;
+    stat_2_value?: string | null;
+    stat_2_label?: string | null;
+    stat_3_value?: string | null;
+    stat_3_label?: string | null;
+    whatsapp_url?: string | null;
+    contact_email?: string | null;
+};
+
+export type Achievement = {
+    id: number;
+    title: string;
+    description: string;
+    order: number;
+};
+
+export type Testimonial = {
+    id: number;
+    author_name: string;
+    author_role: string;
+    quote: string;
+    photo?: string | null;
+    order: number;
 };
 
 export type KaytechProduct = {

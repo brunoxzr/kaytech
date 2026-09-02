@@ -39,7 +39,7 @@ export default function AdminCompanies({ companies }: CompanyAdminProps) {
             headerAction={
                 <button
                     onClick={() => { reset(); setEditingCompany(null); setModalOpen(true); }}
-                    className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2"
+                    className="ui-btn ui-btn-primary ui-t font-semibold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     <span>Nova Empresa</span>
@@ -50,24 +50,24 @@ export default function AdminCompanies({ companies }: CompanyAdminProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 {companies.map((c) => (
-                    <div key={c.id} className="bg-[#0a0a0f] border border-white/10 rounded-2xl p-6 flex flex-col justify-between items-center space-y-4 text-center">
+                    <div key={c.id} className="ui-surface border ui-b rounded-xl p-6 flex flex-col justify-between items-center space-y-4 text-center">
                         <img src={c.logo} alt={c.name} className="h-12 w-auto object-contain filter grayscale" />
-                        <span className="font-bold text-white text-base">{c.name}</span>
+                        <span className="font-medium ui-t text-base">{c.name}</span>
 
-                        <div className="flex gap-2 pt-2 border-t border-white/10 w-full justify-center">
+                        <div className="flex gap-2 pt-2 border-t ui-b w-full justify-center">
                             <button
                                 onClick={() => {
                                     setEditingCompany(c);
                                     setData({ name: c.name, logo: c.logo, url: c.url || '', order: c.order });
                                     setModalOpen(true);
                                 }}
-                                className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg"
+                                className="p-2 ui-subtle hover:ui-subtle ui-t rounded-lg"
                             >
                                 <Edit3 className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => { if (confirm('Remover esta empresa?')) destroy(`/admin/empresas/${c.id}`); }}
-                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg"
+                                className="p-2 ui-subtle hover:bg-red-500/20 ui-neg rounded-lg"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -77,24 +77,24 @@ export default function AdminCompanies({ companies }: CompanyAdminProps) {
             </div>
 
             {modalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0d0d14] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-6">
-                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                            <h2 className="text-xl font-bold text-white">
+                <div className="fixed inset-0 black/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="ui-surface border ui-b rounded-xl p-6 sm:p-8 max-w-md w-full space-y-6">
+                        <div className="flex items-center justify-between border-b ui-b pb-4">
+                            <h2 className="text-xl font-medium ui-t">
                                 {editingCompany ? 'Editar Empresa' : 'Nova Empresa'}
                             </h2>
-                            <button onClick={() => setModalOpen(false)} className="text-gray-400 font-mono">✕</button>
+                            <button onClick={() => setModalOpen(false)} className="ui-t-soft ">✕</button>
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">Nome da Empresa</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">Nome da Empresa</label>
                                 <input
                                     type="text"
                                     required
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 />
                             </div>
                             <ImageUpload
@@ -105,17 +105,17 @@ export default function AdminCompanies({ companies }: CompanyAdminProps) {
                                 required
                             />
                             <div>
-                                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">URL (Opcional)</label>
+                                <label className="block text-xs  uppercase ui-t-soft mb-1">URL (Opcional)</label>
                                 <input
                                     type="text"
                                     value={data.url}
                                     onChange={(e) => setData('url', e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
+                                    className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-xs ui-t"
                                 />
                             </div>
                             <button
                                 type="submit"
-                                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition text-xs uppercase font-mono"
+                                className="w-full ui-btn ui-btn-primary font-medium py-3.5 rounded-xl transition text-xs uppercase "
                             >
                                 Salvar Empresa
                             </button>

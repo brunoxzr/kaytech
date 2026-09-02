@@ -18,8 +18,10 @@ class ProjectAdminController extends Controller
             return [
                 'id' => $p->id,
                 'cover' => $p->cover,
+                'gallery' => $p->gallery ?? [],
                 'technologies' => $p->technologies,
                 'featured' => (bool)$p->featured,
+                'show_on_bruno_profile' => (bool)$p->show_on_bruno_profile,
                 'order' => $p->order,
                 'translations' => $p->translations->keyBy('locale')->toArray(),
             ];
@@ -34,9 +36,12 @@ class ProjectAdminController extends Controller
     {
         $data = $request->validate([
             'cover' => 'required|string',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'string',
             'technologies' => 'required|array',
             'project_url' => 'nullable|string',
             'featured' => 'boolean',
+            'show_on_bruno_profile' => 'boolean',
             'order' => 'integer',
             'translations' => 'required|array',
             'translations.pt-BR.title' => 'required|string',
@@ -46,9 +51,11 @@ class ProjectAdminController extends Controller
 
         $project = Project::create([
             'cover' => $data['cover'],
+            'gallery' => $data['gallery'] ?? [],
             'technologies' => $data['technologies'],
             'project_url' => $data['project_url'] ?? null,
             'featured' => $data['featured'] ?? false,
+            'show_on_bruno_profile' => $data['show_on_bruno_profile'] ?? false,
             'order' => $data['order'] ?? 0,
         ]);
 
@@ -76,18 +83,23 @@ class ProjectAdminController extends Controller
     {
         $data = $request->validate([
             'cover' => 'required|string',
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'string',
             'technologies' => 'required|array',
             'project_url' => 'nullable|string',
             'featured' => 'boolean',
+            'show_on_bruno_profile' => 'boolean',
             'order' => 'integer',
             'translations' => 'required|array',
         ]);
 
         $project->update([
             'cover' => $data['cover'],
+            'gallery' => $data['gallery'] ?? [],
             'technologies' => $data['technologies'],
             'project_url' => $data['project_url'] ?? null,
             'featured' => $data['featured'] ?? false,
+            'show_on_bruno_profile' => $data['show_on_bruno_profile'] ?? false,
             'order' => $data['order'] ?? 0,
         ]);
 

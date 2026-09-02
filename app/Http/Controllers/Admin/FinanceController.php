@@ -1,0 +1,490 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Budget;
+use App\Models\FinancialAccount;
+use App\Models\FinancialCategory;
+use App\Models\FinancialGoal;
+use App\Models\FinancialTransaction;
+use App\Models\RecurringTransaction;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class FinanceController extends Controller
+{
+    /* ===================== DASHBOARD ===================== */
+
+    public function dashboard(Request $request): Response
+    {
+        $ref = $request->date
+            ? Carbon::parse($request->date)->startOfMonth()
+            : Carbon::now()->startOfMonth();
+
+        $year = $ref->year;
+        $month = $ref->month;
+
+        $accounts = FinancialAccount::where('archived', false)->orderBy('order')->get();
+        $totalBalance = $accounts->sum(fn ($a) => $a->current_balance);
+
+        $monthTx = FinancialTransaction::inMonth($year, $month)->get();
+        $income = $monthTx->where('type', 'income')->where('paid', true)->sum('amount');
+        $expense = $monthTx->where('type', 'expense')->where('paid', true)->sum('amount');
+
+        $pendingPayable = FinancialTransaction::where('paid', false)->where('type', 'expense')->sum('amount');
+        $pendingReceivable = FinancialTransaction::where('paid', false)->where('type', 'income')->sum('amount');
+        $overdue = FinancialTransaction::where('paid', false)
+            ->where('date', '<', Carbon::today())
+            ->count();
+
+        // Fluxo de caixa — últimos 6 meses
+        $cashflow = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = $ref->copy()->subMonths($i);
+            $rows = FinancialTransaction::inMonth($m->year, $m->month)->where('paid', true)->get();
+            $cashflow[] = [
+                'label' => $m->translatedFormat('M/y'),
+                'income' => (int) $rows->where('type', 'income')->sum('amount'),
+                'expense' => (int) $rows->where('type', 'expense')->sum('amount'),
+            ];
+        }
+
+        // Gasto por categoria no mês
+        $byCategory = FinancialTransaction::inMonth($year, $month)
+            ->where('type', 'expense')->where('paid', true)
+            ->whereNotNull('category_id')
+            ->select('category_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('category_id')
+            ->get()
+            ->map(function ($row) {
+                $cat = FinancialCategory::find($row->category_id);
+                return [
+                    'name' => $cat?->name ?? 'Sem categoria',
+                    'color' => $cat?->color ?? '#6B7280',
+                    'total' => (int) $row->total,
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+
+        $recentTransactions = FinancialTransaction::with(['account', 'category'])
+            ->orderByDesc('date')->orderByDesc('id')
+            ->limit(8)->get();
+
+        // Orçamento previsto vs realizado
+        $budgets = Budget::with('category')
+            ->where('year', $year)->where('month', $month)
+            ->get()
+            ->map(function ($b) use ($year, $month) {
+                $spent = (int) FinancialTransaction::inMonth($year, $month)
+                    ->where('type', 'expense')->where('paid', true)
+                    ->where('category_id', $b->category_id)
+                    ->sum('amount');
+                return [
+                    'category' => $b->category?->name,
+                    'color' => $b->category?->color ?? '#6B7280',
+                    'planned' => $b->amount,
+                    'spent' => $spent,
+                ];
+            });
+
+        return Inertia::render('Admin/Finance/Dashboard', [
+            'refDate' => $ref->toDateString(),
+            'summary' => [
+                'totalBalance' => (int) $totalBalance,
+                'income' => (int) $income,
+                'expense' => (int) $expense,
+                'net' => (int) ($income - $expense),
+                'pendingPayable' => (int) $pendingPayable,
+                'pendingReceivable' => (int) $pendingReceivable,
+                'overdueCount' => $overdue,
+            ],
+            'accounts' => $accounts->map(fn ($a) => [
+                'id' => $a->id, 'name' => $a->name, 'type' => $a->type,
+                'color' => $a->color, 'balance' => $a->current_balance,
+            ]),
+            'cashflow' => $cashflow,
+            'byCategory' => $byCategory,
+            'budgets' => $budgets,
+            'goals' => FinancialGoal::orderBy('achieved')->get(),
+            'recentTransactions' => $recentTransactions,
+        ]);
+    }
+
+    /* ===================== TRANSACTIONS ===================== */
+
+    public function transactions(Request $request): Response
+    {
+        $query = FinancialTransaction::with(['account', 'category', 'transferAccount']);
+
+        if ($request->filled('account_id')) {
+            $query->where('account_id', $request->account_id);
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('status')) {
+            $query->where('paid', $request->status === 'paid');
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('date', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('date', '<=', $request->to);
+        }
+        if ($request->filled('search')) {
+            $query->where('description', 'like', '%' . $request->search . '%');
+        }
+
+        return Inertia::render('Admin/Finance/Transactions', [
+            'transactions' => $query->orderByDesc('date')->orderByDesc('id')->paginate(30)->withQueryString(),
+            'accounts' => FinancialAccount::orderBy('order')->get(['id', 'name', 'color']),
+            'categories' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type', 'color']),
+            'filters' => $request->only(['account_id', 'type', 'status', 'from', 'to', 'search']),
+        ]);
+    }
+
+    public function storeTransaction(Request $request)
+    {
+        $data = $this->validateTransaction($request);
+        FinancialTransaction::create($data);
+
+        return back()->with('success', 'Lançamento registrado.');
+    }
+
+    public function updateTransaction(Request $request, FinancialTransaction $transaction)
+    {
+        $transaction->update($this->validateTransaction($request));
+
+        return back()->with('success', 'Lançamento atualizado.');
+    }
+
+    public function destroyTransaction(FinancialTransaction $transaction)
+    {
+        $transaction->delete();
+
+        return back()->with('success', 'Lançamento removido.');
+    }
+
+    public function togglePaid(FinancialTransaction $transaction)
+    {
+        $transaction->update(['paid' => ! $transaction->paid]);
+
+        return back()->with('success', $transaction->paid ? 'Marcado como pago.' : 'Marcado como pendente.');
+    }
+
+    private function validateTransaction(Request $request): array
+    {
+        $data = $request->validate([
+            'account_id' => 'required|exists:financial_accounts,id',
+            'category_id' => 'nullable|exists:financial_categories,id',
+            'transfer_account_id' => 'nullable|exists:financial_accounts,id|different:account_id',
+            'type' => 'required|in:income,expense,transfer',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:2000',
+            'date' => 'required|date',
+            'paid' => 'boolean',
+        ]);
+
+        $data['amount'] = (int) round($data['amount'] * 100);
+
+        if ($data['type'] === 'transfer') {
+            $data['category_id'] = null;
+        } else {
+            $data['transfer_account_id'] = null;
+        }
+
+        return $data;
+    }
+
+    /* ===================== ACCOUNTS ===================== */
+
+    public function accounts(): Response
+    {
+        return Inertia::render('Admin/Finance/Accounts', [
+            'accounts' => FinancialAccount::orderBy('order')->get()->map(fn ($a) => [
+                'id' => $a->id, 'name' => $a->name, 'type' => $a->type,
+                'institution' => $a->institution, 'color' => $a->color,
+                'archived' => $a->archived, 'order' => $a->order,
+                'opening_balance' => $a->opening_balance / 100,
+                'balance' => $a->current_balance,
+            ]),
+        ]);
+    }
+
+    public function storeAccount(Request $request)
+    {
+        $data = $this->validateAccount($request);
+        FinancialAccount::create($data);
+
+        return back()->with('success', 'Conta criada.');
+    }
+
+    public function updateAccount(Request $request, FinancialAccount $account)
+    {
+        $account->update($this->validateAccount($request));
+
+        return back()->with('success', 'Conta atualizada.');
+    }
+
+    public function destroyAccount(FinancialAccount $account)
+    {
+        $account->delete();
+
+        return back()->with('success', 'Conta removida.');
+    }
+
+    private function validateAccount(Request $request): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:120',
+            'type' => 'required|in:checking,savings,cash,credit_card,investment',
+            'institution' => 'nullable|string|max:120',
+            'opening_balance' => 'required|numeric',
+            'color' => 'required|string|max:20',
+            'archived' => 'boolean',
+            'order' => 'nullable|integer',
+        ]);
+
+        $data['opening_balance'] = (int) round($data['opening_balance'] * 100);
+
+        return $data;
+    }
+
+    /* ===================== CATEGORIES ===================== */
+
+    public function categories(): Response
+    {
+        return Inertia::render('Admin/Finance/Categories', [
+            'categories' => FinancialCategory::with('children')
+                ->whereNull('parent_id')
+                ->orderBy('type')->orderBy('order')->get(),
+            'flat' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type']),
+        ]);
+    }
+
+    public function storeCategory(Request $request)
+    {
+        FinancialCategory::create($this->validateCategory($request));
+
+        return back()->with('success', 'Categoria criada.');
+    }
+
+    public function updateCategory(Request $request, FinancialCategory $category)
+    {
+        $category->update($this->validateCategory($request));
+
+        return back()->with('success', 'Categoria atualizada.');
+    }
+
+    public function destroyCategory(FinancialCategory $category)
+    {
+        $category->delete();
+
+        return back()->with('success', 'Categoria removida.');
+    }
+
+    private function validateCategory(Request $request): array
+    {
+        return $request->validate([
+            'parent_id' => 'nullable|exists:financial_categories,id',
+            'name' => 'required|string|max:120',
+            'type' => 'required|in:income,expense',
+            'color' => 'required|string|max:20',
+            'icon' => 'nullable|string|max:40',
+            'order' => 'nullable|integer',
+        ]);
+    }
+
+    /* ===================== RECURRING ===================== */
+
+    public function recurring(): Response
+    {
+        return Inertia::render('Admin/Finance/Recurring', [
+            'recurring' => RecurringTransaction::with(['account', 'category'])
+                ->orderByDesc('active')->orderBy('day_of_month')->get()
+                ->map(fn ($r) => array_merge($r->toArray(), ['amount' => $r->amount / 100])),
+            'accounts' => FinancialAccount::orderBy('order')->get(['id', 'name', 'color']),
+            'categories' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type', 'color']),
+        ]);
+    }
+
+    public function storeRecurring(Request $request)
+    {
+        RecurringTransaction::create($this->validateRecurring($request));
+
+        return back()->with('success', 'Recorrência criada.');
+    }
+
+    public function updateRecurring(Request $request, RecurringTransaction $recurring)
+    {
+        $recurring->update($this->validateRecurring($request));
+
+        return back()->with('success', 'Recorrência atualizada.');
+    }
+
+    public function destroyRecurring(RecurringTransaction $recurring)
+    {
+        $recurring->delete();
+
+        return back()->with('success', 'Recorrência removida.');
+    }
+
+    /** Gera os lançamentos pendentes de todas as recorrências ativas até hoje. */
+    public function runRecurring()
+    {
+        $today = Carbon::today();
+        $created = 0;
+
+        foreach (RecurringTransaction::where('active', true)->get() as $rec) {
+            $cursor = $rec->last_generated_on
+                ? $rec->last_generated_on->copy()->addDay()
+                : $rec->starts_on->copy();
+
+            while ($cursor->lte($today) && (! $rec->ends_on || $cursor->lte($rec->ends_on))) {
+                $due = $this->nextDueDate($rec, $cursor);
+                if (! $due || $due->gt($today)) {
+                    break;
+                }
+
+                FinancialTransaction::create([
+                    'account_id' => $rec->account_id,
+                    'category_id' => $rec->category_id,
+                    'type' => $rec->type,
+                    'amount' => $rec->amount,
+                    'description' => $rec->description,
+                    'date' => $due->toDateString(),
+                    'paid' => false,
+                    'recurring_id' => $rec->id,
+                ]);
+                $created++;
+
+                $rec->update(['last_generated_on' => $due]);
+                $cursor = $due->copy()->addDay();
+            }
+        }
+
+        return back()->with('success', "$created lançamento(s) gerado(s) a partir das recorrências.");
+    }
+
+    private function nextDueDate(RecurringTransaction $rec, Carbon $from): ?Carbon
+    {
+        return match ($rec->frequency) {
+            'weekly' => $from->copy(),
+            'yearly' => Carbon::create($from->year, $rec->starts_on->month, min($rec->day_of_month, 28)),
+            default => Carbon::create($from->year, $from->month, min($rec->day_of_month, $from->daysInMonth)),
+        };
+    }
+
+    private function validateRecurring(Request $request): array
+    {
+        $data = $request->validate([
+            'account_id' => 'required|exists:financial_accounts,id',
+            'category_id' => 'nullable|exists:financial_categories,id',
+            'type' => 'required|in:income,expense',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'required|string|max:255',
+            'frequency' => 'required|in:weekly,monthly,yearly',
+            'day_of_month' => 'required|integer|min:1|max:31',
+            'starts_on' => 'required|date',
+            'ends_on' => 'nullable|date|after:starts_on',
+            'active' => 'boolean',
+        ]);
+
+        $data['amount'] = (int) round($data['amount'] * 100);
+
+        return $data;
+    }
+
+    /* ===================== BUDGETS ===================== */
+
+    public function budgets(Request $request): Response
+    {
+        $ref = $request->date ? Carbon::parse($request->date) : Carbon::now();
+        $year = $ref->year;
+        $month = $ref->month;
+
+        $rows = FinancialCategory::where('type', 'expense')->orderBy('name')->get()->map(function ($cat) use ($year, $month) {
+            $budget = Budget::where('category_id', $cat->id)->where('year', $year)->where('month', $month)->first();
+            $spent = (int) FinancialTransaction::inMonth($year, $month)
+                ->where('type', 'expense')->where('paid', true)
+                ->where('category_id', $cat->id)->sum('amount');
+
+            return [
+                'category_id' => $cat->id,
+                'category' => $cat->name,
+                'color' => $cat->color,
+                'planned' => $budget ? $budget->amount / 100 : 0,
+                'spent' => $spent,
+            ];
+        });
+
+        return Inertia::render('Admin/Finance/Budgets', [
+            'refDate' => $ref->startOfMonth()->toDateString(),
+            'rows' => $rows,
+        ]);
+    }
+
+    public function saveBudget(Request $request)
+    {
+        $data = $request->validate([
+            'category_id' => 'required|exists:financial_categories,id',
+            'year' => 'required|integer',
+            'month' => 'required|integer|min:1|max:12',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        Budget::updateOrCreate(
+            ['category_id' => $data['category_id'], 'year' => $data['year'], 'month' => $data['month']],
+            ['amount' => (int) round($data['amount'] * 100)]
+        );
+
+        return back()->with('success', 'Orçamento salvo.');
+    }
+
+    /* ===================== GOALS ===================== */
+
+    public function storeGoal(Request $request)
+    {
+        FinancialGoal::create($this->validateGoal($request));
+
+        return back()->with('success', 'Meta criada.');
+    }
+
+    public function updateGoal(Request $request, FinancialGoal $goal)
+    {
+        $data = $this->validateGoal($request);
+        $data['achieved'] = $data['current_amount'] >= $data['target_amount'];
+        $goal->update($data);
+
+        return back()->with('success', 'Meta atualizada.');
+    }
+
+    public function destroyGoal(FinancialGoal $goal)
+    {
+        $goal->delete();
+
+        return back()->with('success', 'Meta removida.');
+    }
+
+    private function validateGoal(Request $request): array
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:120',
+            'target_amount' => 'required|numeric|min:0.01',
+            'current_amount' => 'required|numeric|min:0',
+            'target_date' => 'nullable|date',
+            'color' => 'required|string|max:20',
+        ]);
+
+        $data['target_amount'] = (int) round($data['target_amount'] * 100);
+        $data['current_amount'] = (int) round($data['current_amount'] * 100);
+
+        return $data;
+    }
+}

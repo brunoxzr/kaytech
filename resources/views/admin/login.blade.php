@@ -1,57 +1,78 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" data-admin-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Administrativo — KayTech Solutions</title>
+    <title>Login — Painel KayTech</title>
     <link rel="icon" type="image/png" href="/images/logo-kaytech.png">
     @vite(['resources/css/app.css'])
-    <!-- Alpine.js initialized exclusively for Blade views as requested -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-[#050505] text-white flex items-center justify-center min-h-screen p-4">
-    <div x-data="{ showPassword: false, loading: false }" class="w-full max-w-md bg-[#0d0d12] border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-        <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+<body class="ui-root ui-canvas antialiased">
+    <div class="min-h-screen w-full lg:grid lg:grid-cols-2">
 
-        <div class="text-center mb-8">
-            <img src="/images/logo-kaytech.png" alt="KayTech Logo" class="h-12 mx-auto mb-4 object-contain">
-            <h1 class="text-2xl font-bold text-white tracking-tight">Painel Administrativo</h1>
-            <p class="text-sm text-gray-400 mt-1">Acesso restrito para gestão da KayTech Solutions</p>
+        {{-- ESQUERDA — marca (desktop) --}}
+        <div class="relative hidden flex-col justify-between p-12 ui-subtle lg:flex">
+            <div class="flex items-center gap-3">
+                <img src="/images/logo-kaytech.png" alt="KayTech" class="h-8 w-auto object-contain">
+                <span class="text-[13px] font-semibold ui-t">KayTech · admin</span>
+            </div>
+            <div class="max-w-sm">
+                <h2 class="text-2xl font-semibold leading-snug tracking-tight ui-t">
+                    Um só lugar para gerir o site e as finanças da operação.
+                </h2>
+                <p class="mt-3 text-[13px] leading-relaxed ui-t-faint">
+                    Projetos, conteúdo e o financeiro completo — no mesmo painel.
+                </p>
+            </div>
+            <span class="text-[12px] ui-t-faint">&copy; {{ date('Y') }} KayTech Solutions</span>
         </div>
 
-        @if(session('error'))
-            <div class="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
-                {{ session('error') }}
-            </div>
-        @endif
+        {{-- DIREITA — formulário (centralizado no mobile) --}}
+        <div class="flex min-h-screen items-center justify-center p-6 sm:p-10">
+            <div x-data="{ showPassword: false, loading: false }" class="w-full max-w-sm">
 
-        <form action="{{ route('admin.login.post') }}" method="POST" @submit="loading = true" class="space-y-5">
-            @csrf
-            <div>
-                <label for="email" class="block text-xs uppercase tracking-wider text-gray-400 mb-2 font-medium">E-mail corporativo</label>
-                <input type="email" name="email" id="email" required placeholder="admin@kaytech.com.br"
-                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
-            </div>
+                <div class="mb-10 text-center lg:hidden">
+                    <img src="/images/logo-kaytech.png" alt="KayTech" class="mx-auto h-10 object-contain">
+                </div>
 
-            <div>
-                <label for="password" class="block text-xs uppercase tracking-wider text-gray-400 mb-2 font-medium">Senha de acesso</label>
-                <div class="relative">
-                    <input :type="showPassword ? 'text' : 'password'" name="password" id="password" required placeholder="••••••••"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
-                    <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white transition">
-                        <span x-text="showPassword ? 'Ocultar' : 'Mostrar'"></span>
+                <div class="mb-8">
+                    <h1 class="text-xl font-semibold tracking-tight ui-t">Entrar no painel</h1>
+                    <p class="mt-1 text-[13px] ui-t-faint">Acesso restrito à gestão da KayTech.</p>
+                </div>
+
+                @if(session('error'))
+                    <div class="mb-6 rounded-lg border ui-b-strong ui-subtle px-4 py-3 text-[13px] ui-neg">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('admin.login.post') }}" method="POST" @submit="loading = true" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="email" class="mb-1.5 block text-[11px] font-medium uppercase tracking-wide ui-t-faint">E-mail</label>
+                        <input type="email" name="email" id="email" required autofocus placeholder="voce@kaytech.com.br" class="ui-input">
+                    </div>
+                    <div>
+                        <label for="password" class="mb-1.5 block text-[11px] font-medium uppercase tracking-wide ui-t-faint">Senha</label>
+                        <div class="relative">
+                            <input :type="showPassword ? 'text' : 'password'" name="password" id="password" required placeholder="••••••••" class="ui-input pr-16">
+                            <button type="button" @click="showPassword = !showPassword"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] ui-t-faint transition hover:ui-t">
+                                <span x-text="showPassword ? 'Ocultar' : 'Mostrar'"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" :disabled="loading" class="ui-btn ui-btn-primary w-full justify-center py-2.5">
+                        <span x-show="!loading">Entrar</span>
+                        <span x-show="loading" class="animate-pulse">Autenticando…</span>
                     </button>
+                </form>
+
+                <div class="mt-8 border-t ui-b pt-6">
+                    <a href="/" class="text-[12px] ui-t-faint transition hover:ui-t">← Voltar ao site público</a>
                 </div>
             </div>
-
-            <button type="submit" :disabled="loading" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30">
-                <span x-show="!loading">Entrar no Painel</span>
-                <span x-show="loading" class="animate-pulse">Autenticando...</span>
-            </button>
-        </form>
-
-        <div class="mt-8 text-center border-t border-white/5 pt-6">
-            <a href="/" class="text-xs text-gray-500 hover:text-gray-300 transition">← Voltar ao site público</a>
         </div>
     </div>
 </body>

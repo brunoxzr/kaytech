@@ -1,25 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-    LayoutDashboard,
-    FolderGit2,
-    Building2,
-    MessageSquare,
-    Settings,
-    LogOut,
-    Package,
-    Link2,
-    Scissors,
-    ChevronLeft,
-    ChevronRight,
-    Search,
-    Sun,
-    Moon,
+    LayoutDashboard, FolderGit2, Building2, MessageSquare, Settings, LogOut,
+    Package, Link2, Scissors, Milestone, Wallet, ArrowLeftRight, Repeat,
+    PiggyBank, Tags, Menu, X, Moon, Sun, PanelLeftClose, PanelLeft, Users,
 } from 'lucide-react';
 import { AdminThemeProvider, useAdminTheme } from '../../Contexts/AdminThemeContext';
-import { ThemeCustomizerPanel } from './ThemeCustomizerPanel';
-import { NavLink } from './NavLink';
 
 interface AdminLayoutProps {
     title: string;
@@ -28,141 +14,150 @@ interface AdminLayoutProps {
     headerAction?: React.ReactNode;
 }
 
-const NAV_ITEMS = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/projetos', label: 'Projetos', icon: FolderGit2 },
-    { href: '/admin/produtos', label: 'Produtos KayTech', icon: Package },
-    { href: '/admin/empresas', label: 'Empresas', icon: Building2 },
-    { href: '/admin/links', label: 'Linktree', icon: Link2 },
-    { href: '/admin/encurtador', label: 'Encurtador', icon: Scissors },
-    { href: '/admin/contatos', label: 'Leads / Contatos', icon: MessageSquare },
-    { href: '/admin/configuracoes', label: 'Configurações', icon: Settings },
+interface NavItem {
+    href: string;
+    label: string;
+    icon: typeof LayoutDashboard;
+    section?: string;
+    exact?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+
+    { href: '/admin/clientes', label: 'Clientes', icon: Users, section: 'CRM' },
+
+    { href: '/admin/financas', label: 'Visão geral', icon: Wallet, section: 'Finanças', exact: true },
+    { href: '/admin/financas/lancamentos', label: 'Lançamentos', icon: ArrowLeftRight, section: 'Finanças' },
+    { href: '/admin/financas/contas', label: 'Contas', icon: PiggyBank, section: 'Finanças' },
+    { href: '/admin/financas/categorias', label: 'Categorias', icon: Tags, section: 'Finanças' },
+    { href: '/admin/financas/recorrencias', label: 'Recorrências', icon: Repeat, section: 'Finanças' },
+    { href: '/admin/financas/orcamentos', label: 'Orçamentos', icon: LayoutDashboard, section: 'Finanças' },
+
+    { href: '/admin/projetos', label: 'Projetos', icon: FolderGit2, section: 'Site' },
+    { href: '/admin/produtos', label: 'Produtos', icon: Package, section: 'Site' },
+    { href: '/admin/empresas', label: 'Empresas', icon: Building2, section: 'Site' },
+    { href: '/admin/links', label: 'Linktree', icon: Link2, section: 'Site' },
+    { href: '/admin/carreira', label: 'Trajetória', icon: Milestone, section: 'Site' },
+    { href: '/admin/encurtador', label: 'Encurtador', icon: Scissors, section: 'Site' },
+    { href: '/admin/contatos', label: 'Leads', icon: MessageSquare, section: 'Site' },
+    { href: '/admin/configuracoes', label: 'Configurações', icon: Settings, section: 'Site' },
 ];
+
+const NavList: React.FC<{ collapsed: boolean; path: string }> = ({ collapsed, path }) => (
+    <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
+        {NAV_ITEMS.map((item, i) => {
+            const isActive = item.exact ? path === item.href : path.startsWith(item.href);
+            const Icon = item.icon;
+            const showSection = !collapsed && item.section && item.section !== NAV_ITEMS[i - 1]?.section;
+            return (
+                <React.Fragment key={item.href}>
+                    {showSection && (
+                        <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider ui-t-faint">
+                            {item.section}
+                        </p>
+                    )}
+                    <Link
+                        href={item.href}
+                        title={collapsed ? item.label : undefined}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition ${
+                            isActive ? 'ui-subtle ui-t font-medium' : 'ui-t-soft hover:ui-subtle'
+                        } ${collapsed ? 'justify-center' : ''}`}
+                    >
+                        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                    </Link>
+                </React.Fragment>
+            );
+        })}
+    </nav>
+);
 
 const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, children, headerAction }) => {
     const { url } = usePage();
-    const { sidebarCollapsed, toggleSidebar, darkMode, toggleTheme, customizer } = useAdminTheme();
-    const [search, setSearch] = useState('');
+    const { theme, toggleTheme, sidebarCollapsed, toggleSidebar } = useAdminTheme();
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const path = url.split('?')[0];
 
-    const filteredItems = NAV_ITEMS.filter((item) =>
-        item.label.toLowerCase().includes(search.toLowerCase().trim())
-    );
+    useEffect(() => { setMobileOpen(false); }, [url]);
 
-    const contentWidthClass = customizer.contentWidth === 'compact' ? 'mx-auto max-w-6xl' : 'w-full';
+    const collapsed = sidebarCollapsed && !mobileOpen;
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white flex admin-ui-radius-soft">
+        <div className="ui-root ui-canvas min-h-screen">
+            {mobileOpen && (
+                <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setMobileOpen(false)} />
+            )}
+
             {/* Sidebar */}
             <aside
                 id="admin-sidebar"
-                className={`bg-[#0a0a0f] border-r border-white/10 flex-col justify-between hidden md:flex fixed inset-y-0 left-0 z-30 transition-all duration-300 ${
-                    sidebarCollapsed ? 'w-20' : 'w-64'
-                }`}
+                className={`ui-surface fixed inset-y-0 left-0 z-40 flex flex-col border-r ui-b transition-transform duration-200
+                    ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
+                    ${collapsed ? 'is-collapsed w-64 md:w-15' : 'w-64'}`}
             >
-                <div>
-                    <div className={`flex items-center h-[72px] border-b border-white/10 transition-all ${sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-6'}`}>
-                        {!sidebarCollapsed && (
-                            <div className="flex items-center gap-3 min-w-0">
-                                <img src="/images/logo-kaytech.png" alt="KayTech Logo" className="h-8 object-contain shrink-0" />
-                                <span className="font-bold text-white tracking-wider text-sm truncate">Painel KayTech</span>
-                            </div>
-                        )}
-                        {sidebarCollapsed && (
-                            <img src="/images/logo-kaytech.png" alt="KayTech Logo" className="h-8 object-contain" />
-                        )}
-                    </div>
-
+                <div className={`flex h-14 items-center border-b ui-b ${collapsed ? 'justify-center px-0' : 'justify-between px-5'}`}>
+                    {!collapsed && (
+                        <span className="text-[13px] font-semibold ui-t">KayTech<span className="ui-t-faint"> · admin</span></span>
+                    )}
                     <button
                         onClick={toggleSidebar}
-                        className="hidden md:flex items-center justify-center w-full py-2 text-gray-500 hover:text-white border-b border-white/10 transition"
-                        title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
+                        className="hidden ui-t-faint transition hover:ui-t md:block"
+                        aria-label="Recolher menu"
                     >
-                        {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                        {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
                     </button>
-
-                    {!sidebarCollapsed && (
-                        <div className="px-4 pt-4">
-                            <div className="relative">
-                                <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Buscar módulo"
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-2 text-xs text-white placeholder:text-gray-600"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    <nav className="p-4 space-y-1">
-                        {filteredItems.map((item) => {
-                            const isActive = item.href === '/admin' ? url === '/admin' : url.startsWith(item.href);
-                            return (
-                                <NavLink
-                                    key={item.href}
-                                    href={item.href}
-                                    label={item.label}
-                                    icon={item.icon}
-                                    active={isActive}
-                                    collapsed={sidebarCollapsed}
-                                />
-                            );
-                        })}
-                        {filteredItems.length === 0 && !sidebarCollapsed && (
-                            <p className="px-4 py-3 text-xs text-gray-600 border border-dashed border-white/10 rounded-lg text-center">
-                                Nenhum módulo encontrado.
-                            </p>
-                        )}
-                    </nav>
+                    <button onClick={() => setMobileOpen(false)} className="ui-t-faint md:hidden" aria-label="Fechar menu">
+                        <X className="h-4 w-4" />
+                    </button>
                 </div>
 
-                <div className={`p-4 border-t border-white/10 space-y-2 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+                <NavList collapsed={collapsed} path={path} />
+
+                <div className={`border-t ui-b p-3 ${collapsed ? 'space-y-1' : 'space-y-0.5'}`}>
                     <button
                         onClick={toggleTheme}
-                        title={darkMode ? 'Modo claro' : 'Modo escuro'}
-                        className={`flex items-center gap-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs font-mono transition ${
-                            sidebarCollapsed ? 'justify-center p-2.5 w-full' : 'px-4 py-2.5 w-full'
-                        }`}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] ui-t-soft transition hover:ui-subtle ${collapsed ? 'justify-center' : ''}`}
                     >
-                        {darkMode ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-                        {!sidebarCollapsed && <span>{darkMode ? 'Modo claro' : 'Modo escuro'}</span>}
+                        {theme === 'dark' ? <Sun className="h-4 w-4" strokeWidth={1.75} /> : <Moon className="h-4 w-4" strokeWidth={1.75} />}
+                        {!collapsed && <span>{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>}
                     </button>
-
                     <Link
                         href="/admin/logout"
                         method="post"
                         as="button"
-                        title="Sair do Painel"
-                        className={`flex items-center gap-3 rounded-lg text-red-400 hover:bg-red-500/10 text-xs font-mono transition ${
-                            sidebarCollapsed ? 'justify-center p-2.5 w-full' : 'px-4 py-2.5 w-full'
-                        }`}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] ui-neg transition hover:ui-subtle ${collapsed ? 'justify-center' : ''}`}
                     >
-                        <LogOut className="w-4 h-4 shrink-0" />
-                        {!sidebarCollapsed && <span>Sair do Painel</span>}
+                        <LogOut className="h-4 w-4" strokeWidth={1.75} />
+                        {!collapsed && <span>Sair</span>}
                     </Link>
                 </div>
             </aside>
 
-            {/* Main Content */}
+            {/* Conteúdo */}
             <main
                 id="admin-main-content"
-                className={`flex-1 p-6 sm:p-10 space-y-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}
+                className={`min-h-screen transition-[padding] duration-200 ${collapsed ? 'is-collapsed' : ''}`}
             >
-                <div className={contentWidthClass}>
-                    <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+                {/* topbar mobile */}
+                <div className="flex items-center gap-3 border-b ui-b px-4 py-3 md:hidden">
+                    <button onClick={() => setMobileOpen(true)} aria-label="Abrir menu" className="ui-t-soft">
+                        <Menu className="h-5 w-5" />
+                    </button>
+                    <span className="text-[13px] font-semibold ui-t">KayTech · admin</span>
+                </div>
+
+                <div className="mx-auto max-w-6xl px-6 py-8 sm:px-10">
+                    <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-extrabold text-white tracking-tight">{title}</h1>
-                            {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+                            <h1 className="text-2xl font-semibold tracking-tight ui-t">{title}</h1>
+                            {subtitle && <p className="mt-1 text-[13px] ui-t-faint">{subtitle}</p>}
                         </div>
                         {headerAction}
                     </div>
-
-                    <div className="space-y-8">{children}</div>
+                    <div className="space-y-6">{children}</div>
                 </div>
             </main>
-
-            <ThemeCustomizerPanel />
         </div>
     );
 };
