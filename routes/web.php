@@ -26,6 +26,11 @@ use App\Http\Controllers\Admin\TestimonialAdminController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ClientController;
 
+Route::domain('brunokay.kaytech.com.br')->group(function () {
+    Route::get('/', [LinkPageController::class, 'brunokay'])->name('brunokay.home');
+    Route::post('/contato', [BrunoContactController::class, 'store'])->name('brunokay.domain.contact.store');
+});
+
 // Public Root Redirect
 Route::get('/', function () {
     $locale = cookie('kaytech_locale') ?? session('locale', 'pt-BR');
