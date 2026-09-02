@@ -164,6 +164,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/contas', [FinanceController::class, 'accounts'])->name('accounts');
             Route::post('/contas', [FinanceController::class, 'storeAccount'])->name('accounts.store');
             Route::put('/contas/{account}', [FinanceController::class, 'updateAccount'])->name('accounts.update');
+            Route::patch('/contas/{account}/ajustar-saldo', [FinanceController::class, 'adjustBalance'])->name('accounts.adjust');
             Route::delete('/contas/{account}', [FinanceController::class, 'destroyAccount'])->name('accounts.destroy');
 
             Route::get('/categorias', [FinanceController::class, 'categories'])->name('categories');

@@ -70,7 +70,7 @@ export default function Recurring({ recurring, accounts, categories }: { recurri
                                 <td className="px-4 py-3 font-medium ui-t">{r.description}</td>
                                 <td className="px-4 py-3">{r.category?.name ?? <span className="ui-t-faint">—</span>}</td>
                                 <td className="px-4 py-3 ui-t-faint">{r.account?.name}</td>
-                                <td className="px-4 py-3 ui-t-faint">{FREQUENCIES[r.frequency]} · dia {r.day_of_month}</td>
+                                <td className="px-4 py-3 ui-t-faint">{FREQUENCIES[r.frequency]} · {r.day_of_month === 0 ? 'último dia' : `dia ${r.day_of_month}`}</td>
                                 <td className={`px-4 py-3 text-right font-medium ${r.type === 'income' ? 'ui-pos' : 'ui-neg'}`}>{brl(r.amount)}</td>
                                 <td className="px-4 py-3 text-center">
                                     <span className={`inline-block h-2 w-2 rounded-full ${r.active ? 'ui-pos' : 'ui-subtle'}`} />
@@ -99,7 +99,12 @@ export default function Recurring({ recurring, accounts, categories }: { recurri
                     <Field label="Descrição"><input className={inputClass} required value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} /></Field>
                     <div className="grid grid-cols-2 gap-3">
                         <Field label="Valor (R$)"><input type="number" step="0.01" min="0.01" className={inputClass} required value={form.data.amount} onChange={(e) => form.setData('amount', e.target.value)} /></Field>
-                        <Field label="Dia do mês"><input type="number" min="1" max="31" className={inputClass} value={form.data.day_of_month} onChange={(e) => form.setData('day_of_month', Number(e.target.value))} /></Field>
+                        <Field label="Dia do mês">
+                            <select className={inputClass} value={form.data.day_of_month} onChange={(e) => form.setData('day_of_month', Number(e.target.value))}>
+                                <option value={0}>Último dia</option>
+                                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>Dia {d}</option>)}
+                            </select>
+                        </Field>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <Field label="Conta">

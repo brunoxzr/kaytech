@@ -34,8 +34,11 @@ class FinanceController extends Controller
         $income = $monthTx->where('type', 'income')->where('paid', true)->sum('amount');
         $expense = $monthTx->where('type', 'expense')->where('paid', true)->sum('amount');
 
-        // "Total levantado" = tudo que já entrou (receitas pagas, histórico completo)
-        $totalRaised = (int) FinancialTransaction::where('type', 'income')->where('paid', true)->sum('amount');
+        // "Total levantado" = receitas pagas de verdade (exclui a categoria técnica "Ajuste de saldo")
+        $adjustCatId = FinancialCategory::where('name', 'Ajuste de saldo')->pluck('id');
+        $totalRaised = (int) FinancialTransaction::where('type', 'income')->where('paid', true)
+            ->whereNotIn('category_id', $adjustCatId)
+            ->sum('amount');
 
         $pendingPayable = FinancialTransaction::where('paid', false)->where('type', 'expense')->sum('amount');
         $pendingReceivable = FinancialTransaction::where('paid', false)->where('type', 'income')->sum('amount');
@@ -212,7 +215,31 @@ class FinanceController extends Controller
     public function storeTransaction(Request $request)
     {
         $data = $this->validateTransaction($request);
-        FinancialTransaction::create($data);
+        $tx = FinancialTransaction::create($data);
+
+        // Opcional: transformar em recorrência mensal
+        if ($request->boolean('recurs') && $data['type'] !== 'transfer') {
+            $rec = $request->validate([
+                'recur_day' => 'required|integer|min:0|max:31',   // 0 = último dia do mês
+                'recur_until' => 'nullable|date|after:date',
+            ]);
+
+            $recurring = RecurringTransaction::create([
+                'account_id' => $data['account_id'],
+                'category_id' => $data['category_id'] ?? null,
+                'type' => $data['type'],
+                'amount' => $data['amount'],
+                'description' => $data['description'],
+                'frequency' => 'monthly',
+                'day_of_month' => $rec['recur_day'],
+                'starts_on' => $data['date'],
+                'ends_on' => $rec['recur_until'] ?? null,
+                'last_generated_on' => $data['date'], // este lançamento já cobre o mês atual
+                'active' => true,
+            ]);
+
+            $tx->update(['recurring_id' => $recurring->id]);
+        }
 
         return back()->with('success', 'Lançamento registrado.');
     }
@@ -298,6 +325,45 @@ class FinanceController extends Controller
         $account->delete();
 
         return back()->with('success', 'Conta removida.');
+    }
+
+    /**
+     * Ajusta o saldo atual da conta para um valor informado,
+     * criando um lançamento de ajuste com a diferença. Não mexe no "total levantado".
+     */
+    public function adjustBalance(Request $request, FinancialAccount $account)
+    {
+        $data = $request->validate([
+            'target' => 'required|numeric',
+            'date' => 'nullable|date',
+        ]);
+
+        $targetCents = (int) round($data['target'] * 100);
+        $diff = $targetCents - $account->current_balance;
+
+        if ($diff === 0) {
+            return back()->with('success', 'O saldo já está correto.');
+        }
+
+        $category = FinancialCategory::firstOrCreate(
+            ['name' => 'Ajuste de saldo', 'type' => $diff > 0 ? 'income' : 'expense'],
+            ['color' => '#6B7280']
+        );
+
+        FinancialTransaction::create([
+            'account_id' => $account->id,
+            'category_id' => $category->id,
+            'type' => $diff > 0 ? 'income' : 'expense',
+            'amount' => abs($diff),
+            'description' => 'Ajuste de saldo',
+            'notes' => 'Ajuste manual para bater com o saldo real da conta.',
+            'date' => $data['date'] ?? now()->toDateString(),
+            'paid' => true,
+        ]);
+
+        $signed = number_format($diff / 100, 2, ',', '.');
+
+        return back()->with('success', "Saldo ajustado (diferença de R$ {$signed}).");
     }
 
     private function validateAccount(Request $request): array
@@ -435,10 +501,15 @@ class FinanceController extends Controller
 
     private function nextDueDate(RecurringTransaction $rec, Carbon $from): ?Carbon
     {
+        // day_of_month = 0 → último dia do mês
+        $day = fn (Carbon $ref) => $rec->day_of_month === 0
+            ? $ref->daysInMonth
+            : min($rec->day_of_month, $ref->daysInMonth);
+
         return match ($rec->frequency) {
             'weekly' => $from->copy(),
-            'yearly' => Carbon::create($from->year, $rec->starts_on->month, min($rec->day_of_month, 28)),
-            default => Carbon::create($from->year, $from->month, min($rec->day_of_month, $from->daysInMonth)),
+            'yearly' => Carbon::create($from->year, $rec->starts_on->month, min($rec->day_of_month ?: 28, 28)),
+            default => Carbon::create($from->year, $from->month, $day($from)),
         };
     }
 
@@ -451,7 +522,7 @@ class FinanceController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string|max:255',
             'frequency' => 'required|in:weekly,monthly,yearly',
-            'day_of_month' => 'required|integer|min:1|max:31',
+            'day_of_month' => 'required|integer|min:0|max:31', // 0 = último dia do mês
             'starts_on' => 'required|date',
             'ends_on' => 'nullable|date|after:starts_on',
             'active' => 'boolean',

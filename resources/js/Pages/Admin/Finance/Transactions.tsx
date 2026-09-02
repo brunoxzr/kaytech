@@ -25,20 +25,19 @@ export default function Transactions({ transactions, accounts, categories, filte
     const [modal, setModal] = React.useState(false);
     const [editing, setEditing] = React.useState<Tx | null>(null);
 
-    const form = useForm({
+    const BLANK = {
         account_id: accounts[0]?.id ?? '', category_id: '', transfer_account_id: '',
         type: 'expense', amount: '', description: '', notes: '', date: today(), paid: true as boolean,
-    });
-
-    const openNew = () => {
-        setEditing(null);
-        form.setData({ account_id: accounts[0]?.id ?? '', category_id: '', transfer_account_id: '', type: 'expense', amount: '', description: '', notes: '', date: today(), paid: true });
-        setModal(true);
+        recurs: false as boolean, recur_day: 5, recur_until: '',
     };
+    const form = useForm({ ...BLANK });
+
+    const openNew = () => { setEditing(null); form.setData({ ...BLANK }); setModal(true); };
 
     const openEdit = (t: Tx) => {
         setEditing(t);
         form.setData({
+            ...BLANK,
             account_id: t.account_id, category_id: t.category_id ?? '', transfer_account_id: t.transfer_account_id ?? '',
             type: t.type, amount: String(t.amount / 100), description: t.description, notes: t.notes ?? '',
             date: t.date, paid: t.paid,
@@ -195,6 +194,39 @@ export default function Transactions({ transactions, accounts, categories, filte
                         <input type="checkbox" checked={form.data.paid} onChange={(e) => form.setData('paid', e.target.checked)} className="rounded ui-b-strong ui-subtle" />
                         Já foi pago / recebido (desmarque para conta a pagar/receber)
                     </label>
+
+                    {/* Recorrência mensal — só em novo lançamento e não em transferência */}
+                    {!editing && form.data.type !== 'transfer' && (
+                        <div className="rounded-lg border ui-b p-3">
+                            <label className="flex items-center gap-2 text-sm ui-t-soft">
+                                <input type="checkbox" checked={form.data.recurs}
+                                       onChange={(e) => form.setData('recurs', e.target.checked)}
+                                       className="rounded ui-b-strong ui-subtle" />
+                                Repetir todo mês
+                            </label>
+                            {form.data.recurs && (
+                                <div className="mt-3 grid grid-cols-2 gap-3">
+                                    <Field label="Dia do mês">
+                                        <select className={inputClass} value={form.data.recur_day}
+                                                onChange={(e) => form.setData('recur_day', Number(e.target.value))}>
+                                            <option value={0}>Último dia</option>
+                                            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                                                <option key={d} value={d}>Dia {d}</option>
+                                            ))}
+                                        </select>
+                                    </Field>
+                                    <Field label="Repetir até (opcional)">
+                                        <input type="date" className={inputClass} value={form.data.recur_until}
+                                               onChange={(e) => form.setData('recur_until', e.target.value)} />
+                                    </Field>
+                                    <p className="col-span-2 text-[12px] ui-t-faint">
+                                        Os próximos meses viram “contas a pagar/receber” pendentes ao clicar em “Gerar pendentes”, na aba Config › Recorrências.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <Field label="Observações"><textarea className={inputClass} rows={2} value={form.data.notes} onChange={(e) => form.setData('notes', e.target.value)} /></Field>
                     <button type="submit" disabled={form.processing} className={`${primaryBtn} w-full py-3`}>{editing ? 'Salvar alterações' : 'Registrar lançamento'}</button>
                 </form>

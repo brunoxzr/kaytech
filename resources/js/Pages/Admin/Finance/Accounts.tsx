@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Edit3, Plus, Trash2, Landmark, Wallet, PiggyBank, CreditCard, TrendingUp } from 'lucide-react';
+import { Edit3, Plus, Trash2, Landmark, Wallet, PiggyBank, CreditCard, TrendingUp, Scale } from 'lucide-react';
 import { AdminLayout } from '../../../Components/Admin/AdminLayout';
 import { ACCOUNT_TYPES, brl, Field, inputClass, Modal, primaryBtn } from '../../../Components/Admin/Finance/shared';
 
@@ -21,6 +21,15 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
     const [modal, setModal] = React.useState(false);
     const [editing, setEditing] = React.useState<Account | null>(null);
     const form = useForm({ name: '', type: 'checking', institution: '', opening_balance: '0', color: '#1F7A3D', archived: false as boolean, order: 0 });
+
+    const [adjusting, setAdjusting] = React.useState<Account | null>(null);
+    const adjustForm = useForm({ target: '', date: new Date().toISOString().slice(0, 10) });
+    const openAdjust = (a: Account) => { setAdjusting(a); adjustForm.setData({ target: String(a.balance), date: new Date().toISOString().slice(0, 10) }); };
+    const submitAdjust = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!adjusting) return;
+        adjustForm.patch(`/admin/financas/contas/${adjusting.id}/ajustar-saldo`, { onSuccess: () => { setAdjusting(null); adjustForm.reset(); } });
+    };
 
     const openNew = () => { setEditing(null); form.setData({ name: '', type: 'checking', institution: '', opening_balance: '0', color: '#1F7A3D', archived: false, order: accounts.length }); setModal(true); };
     const openEdit = (a: Account) => {
@@ -97,6 +106,9 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
                                     {brl(a.balance)}
                                 </span>
                                 <div className="flex shrink-0 gap-1.5 opacity-0 transition group-hover:opacity-100">
+                                    <button onClick={() => openAdjust(a)} title="Ajustar saldo" className="rounded-md border ui-b p-1.5 ui-t-soft hover:ui-subtle">
+                                        <Scale className="h-3.5 w-3.5" />
+                                    </button>
                                     <button onClick={() => openEdit(a)} className="rounded-md border ui-b p-1.5 ui-t-soft hover:ui-subtle">
                                         <Edit3 className="h-3.5 w-3.5" />
                                     </button>
@@ -135,6 +147,37 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
                     </div>
                 </div>
             )}
+
+            <Modal open={!!adjusting} onClose={() => setAdjusting(null)} title={`Ajustar saldo — ${adjusting?.name ?? ''}`}>
+                {adjusting && (
+                    <form onSubmit={submitAdjust} className="space-y-4">
+                        <p className="text-[13px] ui-t-faint">
+                            Saldo calculado agora: <strong className="ui-t">{brl(adjusting.balance)}</strong>.
+                            Informe o saldo real — a diferença vira um lançamento de “Ajuste de saldo” e não conta no total levantado.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <Field label="Saldo real hoje (R$)">
+                                <input type="number" step="0.01" className={inputClass} required
+                                       value={adjustForm.data.target} onChange={(e) => adjustForm.setData('target', e.target.value)} />
+                            </Field>
+                            <Field label="Data do ajuste">
+                                <input type="date" className={inputClass} value={adjustForm.data.date}
+                                       onChange={(e) => adjustForm.setData('date', e.target.value)} />
+                            </Field>
+                        </div>
+                        {adjustForm.data.target !== '' && Number(adjustForm.data.target) * 100 !== adjusting.balance && (
+                            <p className="text-[12px] ui-t-soft">
+                                Diferença: <strong className={Number(adjustForm.data.target) * 100 > adjusting.balance ? 'ui-pos' : 'ui-neg'}>
+                                    {brl(Math.round(Number(adjustForm.data.target) * 100) - adjusting.balance)}
+                                </strong>
+                            </p>
+                        )}
+                        <button type="submit" disabled={adjustForm.processing} className={`${primaryBtn} w-full justify-center py-2.5`}>
+                            Aplicar ajuste
+                        </button>
+                    </form>
+                )}
+            </Modal>
 
             <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Editar conta' : 'Nova conta'}>
                 <form onSubmit={submit} className="space-y-4">
