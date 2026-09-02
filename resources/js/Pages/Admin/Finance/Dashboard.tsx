@@ -3,6 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { AdminLayout } from '../../../Components/Admin/AdminLayout';
 import { Panel, PanelTitle, Stat, Button, Field, Input, Modal } from '../../../Components/Admin/ui';
+import { Greeting } from '../../../Components/Admin/Greeting';
 import { brl, brlShort } from '../../../Components/Admin/Finance/shared';
 
 interface Summary {
@@ -133,8 +134,8 @@ export default function FinanceDashboard({
 
     return (
         <AdminLayout
-            title="Finanças"
-            subtitle="Visão geral da saúde financeira"
+            title={<Greeting />}
+            subtitle="Finanças · visão geral da saúde financeira"
             headerAction={
                 <div className="flex items-center gap-1 rounded-lg border ui-b-strong p-0.5">
                     <button onClick={() => go(shiftMonth(refDate, -1))} className="rounded-md p-1.5 ui-t-faint transition hover:ui-subtle">

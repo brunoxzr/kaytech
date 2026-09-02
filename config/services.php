@@ -2,6 +2,17 @@
 
 return [
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+    ],
+
+    'jarvis' => [
+        // Número (só dígitos, com DDI) para onde vai o resumo do lead prospectado pelo bot público.
+        'whatsapp' => env('JARVIS_WHATSAPP', '5543988506395'),
+    ],
+
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

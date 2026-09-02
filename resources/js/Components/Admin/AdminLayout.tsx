@@ -6,9 +6,10 @@ import {
     PiggyBank, Tags, Menu, X, Moon, Sun, PanelLeftClose, PanelLeft, Users,
 } from 'lucide-react';
 import { AdminThemeProvider, useAdminTheme } from '../../Contexts/AdminThemeContext';
+import { ChatWidget } from '../Chat/ChatWidget';
 
 interface AdminLayoutProps {
-    title: string;
+    title: React.ReactNode;
     subtitle?: string;
     children: React.ReactNode;
     headerAction?: React.ReactNode;
@@ -69,6 +70,12 @@ const NavList: React.FC<{ collapsed: boolean; path: string }> = ({ collapsed, pa
         })}
     </nav>
 );
+
+const jarvisGreeting = () => {
+    const h = new Date().getHours();
+    const period = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    return `${period}, senhor. Quantos milhões vamos fazer hoje?`;
+};
 
 const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, children, headerAction }) => {
     const { url } = usePage();
@@ -156,6 +163,14 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, childre
                     <div className="space-y-6">{children}</div>
                 </div>
             </main>
+
+            <ChatWidget
+                endpoint="/admin/jarvis"
+                title="Jarvis"
+                intro={jarvisGreeting()}
+                placeholder="Pergunte ou peça uma ação…"
+                theme="ui"
+            />
         </div>
     );
 };

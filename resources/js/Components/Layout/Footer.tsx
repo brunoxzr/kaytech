@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from '../../i18n';
 import { usePage, Link } from '@inertiajs/react';
 import { SharedProps } from '../../Types';
+import { ProspectBot } from '../Chat/ProspectBot';
 
 export const Footer: React.FC = () => {
     const { t } = useTranslation();
@@ -74,6 +75,8 @@ export const Footer: React.FC = () => {
                     <span>Curitiba / Brasil</span>
                 </div>
             </div>
+
+            <ProspectBot />
         </footer>
     );
 };

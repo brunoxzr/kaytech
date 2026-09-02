@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { CalendarClock } from 'lucide-react';
 import { AdminLayout } from '../../Components/Admin/AdminLayout';
 import { Panel, PanelTitle, Stat, Badge } from '../../Components/Admin/ui';
+import { Greeting } from '../../Components/Admin/Greeting';
 
 interface StatsProps {
     total_projects: number;
@@ -69,7 +70,7 @@ const brl = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'c
 export default function AdminDashboard({ stats, recent_leads, crm, finance }: Props) {
     return (
         <AdminLayout
-            title="Visão geral"
+            title={<Greeting />}
             subtitle="Gestão do ecossistema KayTech"
             headerAction={<a href="/" target="_blank" className="text-[12px] ui-t-soft hover:ui-t">Abrir site público →</a>}
         >

@@ -71,6 +71,10 @@ Route::post('/brunokay/contato', [BrunoContactController::class, 'store'])->name
 // API Translation Endpoint
 Route::post('/api/translate', [TranslationController::class, 'translate'])->middleware('throttle:30,1')->name('api.translate');
 
+// Chatbot público de prospecção
+Route::post('/api/prospect-bot', [\App\Http\Controllers\ProspectBotController::class, 'chat'])
+    ->middleware('throttle:20,1')->name('api.prospect-bot');
+
 // Admin Auth Routes (Blade views)
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('admin.login');
@@ -80,6 +84,10 @@ Route::prefix('admin')->group(function () {
     // Protected Admin Routes
     Route::middleware('auth')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+        // Jarvis — assistente IA do painel
+        Route::post('/jarvis', [\App\Http\Controllers\Admin\JarvisController::class, 'chat'])
+            ->middleware('throttle:30,1')->name('admin.jarvis');
 
         // Generic media upload (used by all admin image fields)
         Route::post('/upload', [MediaUploadController::class, 'store'])->name('admin.upload');

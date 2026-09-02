@@ -7,6 +7,7 @@ import { LinkList } from '../Components/Links/LinkList';
 import { BrunoContact } from '../Components/Bruno/BrunoContact';
 import { SectionHeading, OrbitLines, ArrowCircle, Chip } from '../Components/Editorial/primitives';
 import { useSiteTheme } from '../Hooks/useSiteTheme';
+import { ProspectBot } from '../Components/Chat/ProspectBot';
 
 const LOCALES: { code: string; label: string }[] = [
     { code: 'pt-BR', label: 'PT' },
@@ -296,6 +297,8 @@ export default function BrunoKay({ links, settings, milestones, projects, achiev
                     <span>© {new Date().getFullYear()}</span>
                 </div>
             </footer>
+
+            <ProspectBot />
         </div>
     );
 }
