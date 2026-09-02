@@ -9,7 +9,6 @@ interface Summary {
     totalRaised: number; income: number; expense: number; net: number;
     pendingPayable: number; pendingReceivable: number; overdueCount: number;
 }
-interface AccountLite { id: number; name: string; type: string; color: string; balance: number; }
 interface CashflowPoint { label: string; income: number; expense: number; }
 interface CategorySlice { name: string; color: string; total: number; }
 interface BudgetRow { category: string; color: string; planned: number; spent: number; }
@@ -21,7 +20,6 @@ interface TxRow {
 interface Props {
     refDate: string;
     summary: Summary;
-    accounts: AccountLite[];
     cashflow: CashflowPoint[];
     balanceTrend: { label: string; balance: number }[];
     byCategory: CategorySlice[];
@@ -123,7 +121,7 @@ function DonutChart({ data }: { data: CategorySlice[] }) {
 }
 
 export default function FinanceDashboard({
-    refDate, summary, accounts, cashflow, balanceTrend, byCategory, budgets, goals, recentTransactions,
+    refDate, summary, cashflow, balanceTrend, byCategory, budgets, goals, recentTransactions,
 }: Props) {
     const [goalModal, setGoalModal] = React.useState(false);
     const goalForm = useForm({ name: '', target_amount: '', current_amount: '0', target_date: '', color: '#1F7A3D' });
@@ -165,27 +163,6 @@ export default function FinanceDashboard({
                     <Stat label="Vencidos" value={String(summary.overdueCount)} tone={summary.overdueCount > 0 ? 'neg' : 'default'} hint="pendentes atrasados" />
                 </div>
             )}
-
-            <Panel>
-                <PanelTitle action={<Link href="/admin/financas/contas" className="text-[12px] ui-t-soft hover:ui-t">Gerenciar</Link>}>
-                    Contas
-                </PanelTitle>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    {accounts.map((a) => (
-                        <div key={a.id} className="rounded-lg border ui-b p-3">
-                            <span className="flex items-center gap-2 text-[12px] ui-t-faint">
-                                <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />{a.name}
-                            </span>
-                            <span className={`mt-1.5 block text-base font-semibold ${a.balance >= 0 ? 'ui-t' : 'ui-neg'}`}>{brl(a.balance)}</span>
-                        </div>
-                    ))}
-                    {accounts.length === 0 && (
-                        <Link href="/admin/financas/contas" className="col-span-full rounded-lg border border-dashed ui-b-strong p-6 text-center text-[13px] ui-t-faint hover:ui-t">
-                            Cadastre sua primeira conta →
-                        </Link>
-                    )}
-                </div>
-            </Panel>
 
             <Panel>
                 <PanelTitle>Evolução do saldo · 12 meses</PanelTitle>
