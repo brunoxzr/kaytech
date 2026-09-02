@@ -73,8 +73,14 @@ const NavList: React.FC<{ collapsed: boolean; path: string }> = ({ collapsed, pa
 
 const jarvisGreeting = () => {
     const h = new Date().getHours();
-    const period = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-    return `${period}, senhor. Quantos milhões vamos fazer hoje?`;
+    const period =
+        h < 6 ? 'Boa madrugada' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    const extra =
+        h < 6 ? ' Trabalhando até essa hora, imagino que valha a pena.'
+        : h < 12 ? ' Tudo pronto por aqui.'
+        : h < 18 ? ' Às ordens.'
+        : ' O dia rendeu, presumo.';
+    return `${period}, senhor.${extra} Quantos milhões vamos fazer hoje?`;
 };
 
 const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, children, headerAction }) => {

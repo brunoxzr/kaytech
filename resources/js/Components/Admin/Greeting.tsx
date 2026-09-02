@@ -10,7 +10,11 @@ export const Greeting: React.FC<{ className?: string }> = ({ className = '' }) =
     const first = full.split(' ')[0] || 'Bruno';
 
     const h = new Date().getHours();
-    const period = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    const { period, emoji } =
+        h < 6 ? { period: 'Boa madrugada', emoji: '🌙' }
+        : h < 12 ? { period: 'Bom dia', emoji: '☀️' }
+        : h < 18 ? { period: 'Boa tarde', emoji: '👋' }
+        : { period: 'Boa noite', emoji: '🌆' };
 
-    return <span className={className}>{period}, {first}</span>;
+    return <span className={className}>{period}, {first} {emoji}</span>;
 };
