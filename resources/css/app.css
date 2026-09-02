@@ -203,6 +203,10 @@ html[data-admin-theme="dark"] body {
   color-scheme: dark;
 }
 
+/* logo KayTech é branca: no admin claro fica preta, no escuro fica como é */
+.admin-logo { filter: invert(1); }
+html[data-admin-theme="dark"] .admin-logo { filter: none; }
+
 .ui-root {
   min-height: 100vh;
   background-color: var(--ui-canvas);

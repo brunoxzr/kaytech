@@ -29,10 +29,7 @@ const NAV_ITEMS: NavItem[] = [
 
     { href: '/admin/financas', label: 'Visão geral', icon: Wallet, section: 'Finanças', exact: true },
     { href: '/admin/financas/lancamentos', label: 'Lançamentos', icon: ArrowLeftRight, section: 'Finanças' },
-    { href: '/admin/financas/contas', label: 'Contas', icon: PiggyBank, section: 'Finanças' },
-    { href: '/admin/financas/categorias', label: 'Categorias', icon: Tags, section: 'Finanças' },
-    { href: '/admin/financas/recorrencias', label: 'Recorrências', icon: Repeat, section: 'Finanças' },
-    { href: '/admin/financas/orcamentos', label: 'Orçamentos', icon: LayoutDashboard, section: 'Finanças' },
+    { href: '/admin/financas/config', label: 'Config', icon: Tags, section: 'Finanças' },
 
     { href: '/admin/projetos', label: 'Projetos', icon: FolderGit2, section: 'Site' },
     { href: '/admin/produtos', label: 'Produtos', icon: Package, section: 'Site' },
@@ -96,18 +93,19 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, childre
                     ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
                     ${collapsed ? 'is-collapsed w-64 md:w-15' : 'w-64'}`}
             >
-                <div className={`flex h-14 items-center border-b ui-b ${collapsed ? 'justify-center px-0' : 'justify-between px-5'}`}>
-                    {!collapsed && (
-                        <span className="text-[13px] font-semibold ui-t">KayTech<span className="ui-t-faint"> · admin</span></span>
-                    )}
+                <div className={`flex h-14 items-center border-b ui-b ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
+                    <a href="/admin" className="flex items-center gap-2.5 min-w-0">
+                        <img src="/images/logo-kaytech.png" alt="KayTech" className="admin-logo h-7 w-auto shrink-0 object-contain" />
+                        {!collapsed && <span className="truncate text-[13px] font-semibold ui-t">KayTech<span className="ui-t-faint"> · admin</span></span>}
+                    </a>
                     <button
                         onClick={toggleSidebar}
-                        className="hidden ui-t-faint transition hover:ui-t md:block"
+                        className="hidden shrink-0 ui-t-faint transition hover:ui-t md:block"
                         aria-label="Recolher menu"
                     >
                         {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
                     </button>
-                    <button onClick={() => setMobileOpen(false)} className="ui-t-faint md:hidden" aria-label="Fechar menu">
+                    <button onClick={() => setMobileOpen(false)} className="shrink-0 ui-t-faint md:hidden" aria-label="Fechar menu">
                         <X className="h-4 w-4" />
                     </button>
                 </div>

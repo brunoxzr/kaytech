@@ -6,7 +6,7 @@ import { Panel, PanelTitle, Stat, Button, Field, Input, Modal } from '../../../C
 import { brl, brlShort } from '../../../Components/Admin/Finance/shared';
 
 interface Summary {
-    totalBalance: number; income: number; expense: number; net: number;
+    totalRaised: number; income: number; expense: number; net: number;
     pendingPayable: number; pendingReceivable: number; overdueCount: number;
 }
 interface AccountLite { id: number; name: string; type: string; color: string; balance: number; }
@@ -23,6 +23,7 @@ interface Props {
     summary: Summary;
     accounts: AccountLite[];
     cashflow: CashflowPoint[];
+    balanceTrend: { label: string; balance: number }[];
     byCategory: CategorySlice[];
     budgets: BudgetRow[];
     goals: Goal[];
@@ -63,6 +64,32 @@ function CashflowChart({ data }: { data: CashflowPoint[] }) {
     );
 }
 
+function BalanceTrendChart({ data }: { data: { label: string; balance: number }[] }) {
+    if (data.length < 2) return <p className="py-8 text-center text-[13px] ui-t-faint">Dados insuficientes.</p>;
+    const W = 520, H = 170, pad = 26;
+    const values = data.map((d) => d.balance);
+    const min = Math.min(0, ...values);
+    const max = Math.max(1, ...values);
+    const x = (i: number) => pad + (i / (data.length - 1)) * (W - pad * 2);
+    const y = (v: number) => H - pad - ((v - min) / (max - min || 1)) * (H - pad * 2);
+    const line = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(d.balance).toFixed(1)}`).join(' ');
+    const area = `${line} L ${x(data.length - 1).toFixed(1)} ${H - pad} L ${x(0).toFixed(1)} ${H - pad} Z`;
+    const last = data[data.length - 1];
+    return (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Evolução do saldo (12 meses)">
+            {[0, 0.5, 1].map((f) => (
+                <line key={f} x1={pad} x2={W - pad} y1={pad + f * (H - pad * 2)} y2={pad + f * (H - pad * 2)} stroke="var(--ui-border)" />
+            ))}
+            <path d={area} fill="var(--ui-text)" opacity="0.06" />
+            <path d={line} fill="none" stroke="var(--ui-text)" strokeWidth="1.75" />
+            <circle cx={x(data.length - 1)} cy={y(last.balance)} r="3.5" fill="var(--ui-text)" />
+            {data.map((d, i) => (i % 2 === 0 || i === data.length - 1) && (
+                <text key={i} x={x(i)} y={H - 6} textAnchor="middle" fill="var(--ui-text-faint)" fontSize="9">{d.label}</text>
+            ))}
+        </svg>
+    );
+}
+
 function DonutChart({ data }: { data: CategorySlice[] }) {
     const total = data.reduce((s, d) => s + d.total, 0);
     if (total === 0) return <p className="py-8 text-center text-[13px] ui-t-faint">Sem despesas categorizadas neste mês.</p>;
@@ -96,7 +123,7 @@ function DonutChart({ data }: { data: CategorySlice[] }) {
 }
 
 export default function FinanceDashboard({
-    refDate, summary, accounts, cashflow, byCategory, budgets, goals, recentTransactions,
+    refDate, summary, accounts, cashflow, balanceTrend, byCategory, budgets, goals, recentTransactions,
 }: Props) {
     const [goalModal, setGoalModal] = React.useState(false);
     const goalForm = useForm({ name: '', target_amount: '', current_amount: '0', target_date: '', color: '#1F7A3D' });
@@ -125,7 +152,7 @@ export default function FinanceDashboard({
             <Head title="Finanças — Admin KayTech" />
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <Stat label="Saldo total" value={brl(summary.totalBalance)} tone={summary.totalBalance >= 0 ? 'default' : 'neg'} />
+                <Stat label="Total levantado" value={brl(summary.totalRaised)} tone="pos" hint="todas as entradas já recebidas" />
                 <Stat label="Entradas no mês" value={brl(summary.income)} tone="pos" />
                 <Stat label="Saídas no mês" value={brl(summary.expense)} tone="neg" />
                 <Stat label="Resultado do mês" value={brl(summary.net)} tone={summary.net >= 0 ? 'pos' : 'neg'} />
@@ -158,6 +185,11 @@ export default function FinanceDashboard({
                         </Link>
                     )}
                 </div>
+            </Panel>
+
+            <Panel>
+                <PanelTitle>Evolução do saldo · 12 meses</PanelTitle>
+                <BalanceTrendChart data={balanceTrend} />
             </Panel>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

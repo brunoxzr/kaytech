@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Edit3, Plus, Trash2 } from 'lucide-react';
+import { Edit3, Plus, Trash2, Landmark, Wallet, PiggyBank, CreditCard, TrendingUp } from 'lucide-react';
 import { AdminLayout } from '../../../Components/Admin/AdminLayout';
 import { ACCOUNT_TYPES, brl, Field, inputClass, Modal, primaryBtn } from '../../../Components/Admin/Finance/shared';
 
@@ -8,6 +8,14 @@ interface Account {
     id: number; name: string; type: string; institution: string | null; color: string;
     archived: boolean; order: number; opening_balance: number; balance: number;
 }
+
+const TYPE_ICON: Record<string, typeof Landmark> = {
+    checking: Landmark,
+    savings: PiggyBank,
+    cash: Wallet,
+    credit_card: CreditCard,
+    investment: TrendingUp,
+};
 
 export default function Accounts({ accounts }: { accounts: Account[] }) {
     const [modal, setModal] = React.useState(false);
@@ -26,43 +34,107 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
         editing ? form.put(`/admin/financas/contas/${editing.id}`, { onSuccess: done }) : form.post('/admin/financas/contas', { onSuccess: done });
     };
 
-    const total = accounts.filter((a) => !a.archived).reduce((s, a) => s + a.balance, 0);
+    const active = accounts.filter((a) => !a.archived);
+    const total = active.reduce((s, a) => s + a.balance, 0);
+    const positive = active.filter((a) => a.balance > 0).reduce((s, a) => s + a.balance, 0);
+    const negative = active.filter((a) => a.balance < 0).reduce((s, a) => s + a.balance, 0);
 
     return (
         <AdminLayout
             title="Contas"
-            subtitle="Bancos, carteiras, cartões e investimentos"
+            subtitle="Saldo por conta — bancos, carteiras, cartões e investimentos"
             headerAction={<button onClick={openNew} className={primaryBtn}><Plus className="h-4 w-4" /> Nova conta</button>}
         >
             <Head title="Contas — Finanças KayTech" />
 
-            <div className="rounded-xl border ui-b ui-surface p-5">
-                <span className="text-[11px] uppercase tracking-wider ui-t-faint">Saldo consolidado</span>
-                <span className={`mt-1 block text-2xl font-semibold ${total >= 0 ? 'ui-t' : 'ui-neg'}`}>{brl(total)}</span>
+            {/* Consolidado — faixa estilo gateway */}
+            <div className="ui-panel overflow-hidden p-0">
+                <div className="grid grid-cols-1 divide-y ui-b sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                    <div className="p-5">
+                        <span className="text-[11px] font-medium uppercase tracking-wide ui-t-faint">Saldo consolidado</span>
+                        <span className={`mt-1.5 block text-2xl font-semibold tracking-tight ${total >= 0 ? 'ui-t' : 'ui-neg'}`}
+                              style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {brl(total)}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] ui-t-faint">{active.length} conta{active.length !== 1 ? 's' : ''} ativa{active.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="p-5">
+                        <span className="text-[11px] font-medium uppercase tracking-wide ui-t-faint">Disponível</span>
+                        <span className="mt-1.5 block text-2xl font-semibold tracking-tight ui-pos" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {brl(positive)}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] ui-t-faint">contas com saldo positivo</span>
+                    </div>
+                    <div className="p-5">
+                        <span className="text-[11px] font-medium uppercase tracking-wide ui-t-faint">Negativo</span>
+                        <span className="mt-1.5 block text-2xl font-semibold tracking-tight ui-neg" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {brl(negative)}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] ui-t-faint">cartões / conta no vermelho</span>
+                    </div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {accounts.map((a) => (
-                    <div key={a.id} className={`rounded-xl border ui-b ui-surface p-5 ${a.archived ? 'opacity-50' : ''}`}>
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <span className="flex items-center gap-2 font-medium ui-t">
-                                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />{a.name}
+            {/* Lista de contas — linhas limpas */}
+            <div className="ui-panel overflow-hidden p-0">
+                <div className="ui-divide">
+                    {active.map((a) => {
+                        const Icon = TYPE_ICON[a.type] ?? Landmark;
+                        return (
+                            <div key={a.id} className="group flex items-center gap-4 px-5 py-4">
+                                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border ui-b"
+                                      style={{ color: a.color }}>
+                                    <Icon className="h-4.5 w-4.5" strokeWidth={1.75} />
                                 </span>
-                                <span className="mt-0.5 block text-xs ui-t-faint">
-                                    {ACCOUNT_TYPES[a.type]}{a.institution ? ` · ${a.institution}` : ''}{a.archived ? ' · arquivada' : ''}
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-[13px] font-medium ui-t">{a.name}</p>
+                                    <p className="truncate text-[11px] ui-t-faint">
+                                        {ACCOUNT_TYPES[a.type]}{a.institution ? ` · ${a.institution}` : ''}
+                                    </p>
+                                </div>
+                                <span className={`shrink-0 text-[15px] font-semibold ${a.balance >= 0 ? 'ui-t' : 'ui-neg'}`}
+                                      style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                    {brl(a.balance)}
                                 </span>
+                                <div className="flex shrink-0 gap-1.5 opacity-0 transition group-hover:opacity-100">
+                                    <button onClick={() => openEdit(a)} className="rounded-md border ui-b p-1.5 ui-t-soft hover:ui-subtle">
+                                        <Edit3 className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => { if (confirm('Remover conta e todos os seus lançamentos?')) router.delete(`/admin/financas/contas/${a.id}`); }}
+                                            className="rounded-md border ui-b p-1.5 ui-neg hover:ui-subtle">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex gap-1">
-                                <button onClick={() => openEdit(a)} className="rounded-md p-1.5 ui-t-soft hover:ui-subtle border ui-b"><Edit3 className="h-3.5 w-3.5" /></button>
-                                <button onClick={() => { if (confirm('Remover conta e todos os seus lançamentos?')) router.delete(`/admin/financas/contas/${a.id}`); }} className="rounded-md p-1.5 ui-neg hover:ui-subtle border ui-b"><Trash2 className="h-3.5 w-3.5" /></button>
-                            </div>
-                        </div>
-                        <span className={`mt-4 block text-xl font-semibold ${a.balance >= 0 ? 'ui-t' : 'ui-neg'}`}>{brl(a.balance)}</span>
-                    </div>
-                ))}
-                {accounts.length === 0 && <p className="text-sm ui-t-faint">Nenhuma conta cadastrada.</p>}
+                        );
+                    })}
+                    {active.length === 0 && (
+                        <p className="px-5 py-12 text-center text-[13px] ui-t-faint">Nenhuma conta cadastrada.</p>
+                    )}
+                </div>
             </div>
+
+            {/* Arquivadas */}
+            {accounts.some((a) => a.archived) && (
+                <div>
+                    <p className="mb-2 text-[11px] font-medium uppercase tracking-wide ui-t-faint">Arquivadas</p>
+                    <div className="ui-panel overflow-hidden p-0">
+                        <div className="ui-divide">
+                            {accounts.filter((a) => a.archived).map((a) => (
+                                <div key={a.id} className="flex items-center justify-between px-5 py-3 opacity-60">
+                                    <span className="text-[13px] ui-t-soft">{a.name} · {ACCOUNT_TYPES[a.type]}</span>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[13px] ui-t-faint" style={{ fontVariantNumeric: 'tabular-nums' }}>{brl(a.balance)}</span>
+                                        <button onClick={() => openEdit(a)} className="rounded-md border ui-b p-1.5 ui-t-soft hover:ui-subtle">
+                                            <Edit3 className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Editar conta' : 'Nova conta'}>
                 <form onSubmit={submit} className="space-y-4">
@@ -73,17 +145,17 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
                                 {Object.entries(ACCOUNT_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                             </select>
                         </Field>
-                        <Field label="Instituição"><input className={inputClass} value={form.data.institution} onChange={(e) => form.setData('institution', e.target.value)} /></Field>
+                        <Field label="Instituição"><input className={inputClass} value={form.data.institution} onChange={(e) => form.setData('institution', e.target.value)} placeholder="Nubank, Itaú…" /></Field>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <Field label="Saldo inicial (R$)"><input type="number" step="0.01" className={inputClass} value={form.data.opening_balance} onChange={(e) => form.setData('opening_balance', e.target.value)} /></Field>
                         <Field label="Cor"><input type="color" className={`${inputClass} h-9 p-1`} value={form.data.color} onChange={(e) => form.setData('color', e.target.value)} /></Field>
                     </div>
-                    <label className="flex items-center gap-2 text-sm ui-t-soft">
+                    <label className="flex items-center gap-2 text-[13px] ui-t-soft">
                         <input type="checkbox" checked={form.data.archived} onChange={(e) => form.setData('archived', e.target.checked)} className="rounded ui-b-strong ui-subtle" />
-                        Conta arquivada (não conta no saldo consolidado)
+                        Conta arquivada (não conta no consolidado)
                     </label>
-                    <button type="submit" disabled={form.processing} className={`${primaryBtn} w-full py-3`}>{editing ? 'Salvar' : 'Criar conta'}</button>
+                    <button type="submit" disabled={form.processing} className={`${primaryBtn} w-full justify-center py-2.5`}>{editing ? 'Salvar' : 'Criar conta'}</button>
                 </form>
             </Modal>
         </AdminLayout>

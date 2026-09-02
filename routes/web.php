@@ -153,6 +153,7 @@ Route::prefix('admin')->group(function () {
         // ===================== Finanças =====================
         Route::prefix('financas')->name('admin.finance.')->group(function () {
             Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+            Route::get('/config', [FinanceController::class, 'config'])->name('config');
 
             Route::get('/lancamentos', [FinanceController::class, 'transactions'])->name('transactions');
             Route::post('/lancamentos', [FinanceController::class, 'storeTransaction'])->name('transactions.store');

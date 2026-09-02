@@ -29,11 +29,13 @@ class FinanceController extends Controller
         $month = $ref->month;
 
         $accounts = FinancialAccount::where('archived', false)->orderBy('order')->get();
-        $totalBalance = $accounts->sum(fn ($a) => $a->current_balance);
 
         $monthTx = FinancialTransaction::inMonth($year, $month)->get();
         $income = $monthTx->where('type', 'income')->where('paid', true)->sum('amount');
         $expense = $monthTx->where('type', 'expense')->where('paid', true)->sum('amount');
+
+        // "Total levantado" = tudo que já entrou (receitas pagas, histórico completo)
+        $totalRaised = (int) FinancialTransaction::where('type', 'income')->where('paid', true)->sum('amount');
 
         $pendingPayable = FinancialTransaction::where('paid', false)->where('type', 'expense')->sum('amount');
         $pendingReceivable = FinancialTransaction::where('paid', false)->where('type', 'income')->sum('amount');
@@ -50,6 +52,22 @@ class FinanceController extends Controller
                 'label' => $m->translatedFormat('M/y'),
                 'income' => (int) $rows->where('type', 'income')->sum('amount'),
                 'expense' => (int) $rows->where('type', 'expense')->sum('amount'),
+            ];
+        }
+
+        // Evolução do saldo consolidado — últimos 12 meses (fim de cada mês)
+        $openingSum = (int) $accounts->sum('opening_balance');
+        $balanceTrend = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $end = $ref->copy()->subMonths($i)->endOfMonth();
+            $paidUntil = FinancialTransaction::where('paid', true)
+                ->whereDate('date', '<=', $end->toDateString());
+            $in = (int) (clone $paidUntil)->where('type', 'income')->sum('amount');
+            $out = (int) (clone $paidUntil)->where('type', 'expense')->sum('amount');
+            // transferências não mudam o consolidado
+            $balanceTrend[] = [
+                'label' => $end->translatedFormat('M/y'),
+                'balance' => $openingSum + $in - $out,
             ];
         }
 
@@ -95,7 +113,7 @@ class FinanceController extends Controller
         return Inertia::render('Admin/Finance/Dashboard', [
             'refDate' => $ref->toDateString(),
             'summary' => [
-                'totalBalance' => (int) $totalBalance,
+                'totalRaised' => $totalRaised,
                 'income' => (int) $income,
                 'expense' => (int) $expense,
                 'net' => (int) ($income - $expense),
@@ -108,10 +126,53 @@ class FinanceController extends Controller
                 'color' => $a->color, 'balance' => $a->current_balance,
             ]),
             'cashflow' => $cashflow,
+            'balanceTrend' => $balanceTrend,
             'byCategory' => $byCategory,
             'budgets' => $budgets,
             'goals' => FinancialGoal::orderBy('achieved')->get(),
             'recentTransactions' => $recentTransactions,
+        ]);
+    }
+
+    /** Página única "Config" — contas, categorias, recorrências e orçamentos em abas. */
+    public function config(Request $request): Response
+    {
+        $ref = $request->date ? Carbon::parse($request->date) : Carbon::now();
+        $year = $ref->year;
+        $month = $ref->month;
+
+        $budgetRows = FinancialCategory::where('type', 'expense')->orderBy('name')->get()->map(function ($cat) use ($year, $month) {
+            $budget = Budget::where('category_id', $cat->id)->where('year', $year)->where('month', $month)->first();
+            $spent = (int) FinancialTransaction::inMonth($year, $month)
+                ->where('type', 'expense')->where('paid', true)
+                ->where('category_id', $cat->id)->sum('amount');
+            return [
+                'category_id' => $cat->id,
+                'category' => $cat->name,
+                'color' => $cat->color,
+                'planned' => $budget ? $budget->amount / 100 : 0,
+                'spent' => $spent,
+            ];
+        });
+
+        return Inertia::render('Admin/Finance/Config', [
+            'accounts' => FinancialAccount::orderBy('order')->get()->map(fn ($a) => [
+                'id' => $a->id, 'name' => $a->name, 'type' => $a->type,
+                'institution' => $a->institution, 'color' => $a->color,
+                'archived' => $a->archived, 'order' => $a->order,
+                'opening_balance' => $a->opening_balance / 100,
+                'balance' => $a->current_balance,
+            ]),
+            'categories' => FinancialCategory::with('children')
+                ->whereNull('parent_id')->orderBy('type')->orderBy('order')->get(),
+            'flatCategories' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type']),
+            'recurring' => RecurringTransaction::with(['account', 'category'])
+                ->orderByDesc('active')->orderBy('day_of_month')->get()
+                ->map(fn ($r) => array_merge($r->toArray(), ['amount' => $r->amount / 100])),
+            'recurringAccounts' => FinancialAccount::orderBy('order')->get(['id', 'name', 'color']),
+            'recurringCategories' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type', 'color']),
+            'budgetRefDate' => $ref->startOfMonth()->toDateString(),
+            'budgetRows' => $budgetRows,
         ]);
     }
 
