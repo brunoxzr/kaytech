@@ -26,8 +26,10 @@ use App\Http\Controllers\Admin\TestimonialAdminController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ClientController;
 
+// Subdomínio brunokay.kaytech.com.br → LINKTREE (bio-link) do Bruno.
+// O portfólio completo fica em kaytech.com.br/brunokay (path).
 Route::domain('brunokay.kaytech.com.br')->group(function () {
-    Route::get('/', [LinkPageController::class, 'brunokay'])->name('brunokay.home');
+    Route::get('/', [LinkPageController::class, 'brunokayLinks'])->name('brunokay.home');
     Route::post('/contato', [BrunoContactController::class, 'store'])->name('brunokay.domain.contact.store');
 });
 

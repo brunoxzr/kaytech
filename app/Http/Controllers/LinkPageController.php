@@ -24,6 +24,18 @@ class LinkPageController extends Controller
         ]);
     }
 
+    /** Linktree (bio-link) do Bruno — usado pelo subdomínio brunokay.kaytech.com.br. */
+    public function brunokayLinks(): Response
+    {
+        return Inertia::render('LinkPage', [
+            'links' => Link::where('group', 'brunokay')
+                ->where('active', true)
+                ->orderBy('order')
+                ->get(),
+            'settings' => LinkPageSetting::firstOrCreate(['group' => 'brunokay']),
+        ]);
+    }
+
     public function brunokay(): Response
     {
         $locale = app()->getLocale();
