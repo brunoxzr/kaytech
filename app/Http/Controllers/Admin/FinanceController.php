@@ -378,14 +378,14 @@ class FinanceController extends Controller
     }
 
     /**
-     * Ajusta o saldo atual da conta para um valor informado,
-     * criando um lançamento de ajuste com a diferença. Não mexe no "total levantado".
+     * Redefine o saldo atual da conta, absorvendo a diferença no saldo inicial.
+     * Não cria lançamento, não afeta "total levantado" nem o resultado do mês —
+     * é como se a conta tivesse começado com esse valor.
      */
     public function adjustBalance(Request $request, FinancialAccount $account)
     {
         $data = $request->validate([
             'target' => 'required|numeric',
-            'date' => 'nullable|date',
         ]);
 
         $targetCents = (int) round($data['target'] * 100);
@@ -395,25 +395,10 @@ class FinanceController extends Controller
             return back()->with('success', 'O saldo já está correto.');
         }
 
-        $category = FinancialCategory::firstOrCreate(
-            ['name' => 'Ajuste de saldo', 'type' => $diff > 0 ? 'income' : 'expense'],
-            ['color' => '#6B7280']
-        );
+        // opening_balance + movimentações = saldo atual → ajustamos a base.
+        $account->update(['opening_balance' => $account->opening_balance + $diff]);
 
-        FinancialTransaction::create([
-            'account_id' => $account->id,
-            'category_id' => $category->id,
-            'type' => $diff > 0 ? 'income' : 'expense',
-            'amount' => abs($diff),
-            'description' => 'Ajuste de saldo',
-            'notes' => 'Ajuste manual para bater com o saldo real da conta.',
-            'date' => $data['date'] ?? now()->toDateString(),
-            'paid' => true,
-        ]);
-
-        $signed = number_format($diff / 100, 2, ',', '.');
-
-        return back()->with('success', "Saldo ajustado (diferença de R$ {$signed}).");
+        return back()->with('success', 'Saldo da conta atualizado.');
     }
 
     private function validateAccount(Request $request): array

@@ -23,8 +23,8 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
     const form = useForm({ name: '', type: 'checking', institution: '', opening_balance: '0', color: '#1F7A3D', archived: false as boolean, order: 0 });
 
     const [adjusting, setAdjusting] = React.useState<Account | null>(null);
-    const adjustForm = useForm({ target: '', date: new Date().toISOString().slice(0, 10) });
-    const openAdjust = (a: Account) => { setAdjusting(a); adjustForm.setData({ target: String(a.balance), date: new Date().toISOString().slice(0, 10) }); };
+    const adjustForm = useForm({ target: '' });
+    const openAdjust = (a: Account) => { setAdjusting(a); adjustForm.setData({ target: String(a.balance) }); };
     const submitAdjust = (e: React.FormEvent) => {
         e.preventDefault();
         if (!adjusting) return;
@@ -152,28 +152,22 @@ export default function Accounts({ accounts }: { accounts: Account[] }) {
                 {adjusting && (
                     <form onSubmit={submitAdjust} className="space-y-4">
                         <p className="text-[13px] ui-t-faint">
-                            Saldo calculado agora: <strong className="ui-t">{brl(adjusting.balance)}</strong>.
-                            Informe o saldo real — a diferença vira um lançamento de “Ajuste de saldo” e não conta no total levantado.
+                            Saldo atual: <strong className="ui-t">{brl(adjusting.balance)}</strong>.
+                            Informe o novo saldo — a conta passa a valer isso, sem criar lançamento e sem mexer no total levantado nem no resultado do mês.
                         </p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Saldo real hoje (R$)">
-                                <input type="number" step="0.01" className={inputClass} required
-                                       value={adjustForm.data.target} onChange={(e) => adjustForm.setData('target', e.target.value)} />
-                            </Field>
-                            <Field label="Data do ajuste">
-                                <input type="date" className={inputClass} value={adjustForm.data.date}
-                                       onChange={(e) => adjustForm.setData('date', e.target.value)} />
-                            </Field>
-                        </div>
+                        <Field label="Novo saldo (R$)">
+                            <input type="number" step="0.01" className={inputClass} required autoFocus
+                                   value={adjustForm.data.target} onChange={(e) => adjustForm.setData('target', e.target.value)} />
+                        </Field>
                         {adjustForm.data.target !== '' && Number(adjustForm.data.target) * 100 !== adjusting.balance && (
                             <p className="text-[12px] ui-t-soft">
-                                Diferença: <strong className={Number(adjustForm.data.target) * 100 > adjusting.balance ? 'ui-pos' : 'ui-neg'}>
+                                Mudança: <strong className={Number(adjustForm.data.target) * 100 > adjusting.balance ? 'ui-pos' : 'ui-neg'}>
                                     {brl(Math.round(Number(adjustForm.data.target) * 100) - adjusting.balance)}
                                 </strong>
                             </p>
                         )}
                         <button type="submit" disabled={adjustForm.processing} className={`${primaryBtn} w-full justify-center py-2.5`}>
-                            Aplicar ajuste
+                            Atualizar saldo
                         </button>
                     </form>
                 )}
