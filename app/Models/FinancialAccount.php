@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FinancialAccount extends Model
 {
-    protected $fillable = [
-        'name', 'type', 'institution', 'opening_balance', 'color', 'archived', 'order',
+    
+    use BelongsToOwner;
+protected $fillable = [
+        'owner_id', 'name', 'type', 'institution', 'opening_balance', 'color', 'archived', 'order',
     ];
 
     protected $casts = [

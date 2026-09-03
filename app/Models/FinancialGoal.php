@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOwner;
 use Illuminate\Database\Eloquent\Model;
 
 class FinancialGoal extends Model
 {
-    protected $fillable = [
-        'name', 'target_amount', 'current_amount', 'target_date', 'color', 'achieved',
+    
+    use BelongsToOwner;
+protected $fillable = [
+        'owner_id', 'name', 'target_amount', 'current_amount', 'target_date', 'color', 'achieved',
     ];
 
     protected $casts = [

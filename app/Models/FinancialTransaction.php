@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FinancialTransaction extends Model
 {
-    protected $fillable = [
-        'account_id', 'category_id', 'transfer_account_id', 'type', 'amount',
+    
+    use BelongsToOwner;
+protected $fillable = [
+        'owner_id', 'account_id', 'category_id', 'transfer_account_id', 'type', 'amount',
         'description', 'notes', 'date', 'paid', 'recurring_id',
     ];
 

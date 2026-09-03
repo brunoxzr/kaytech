@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FinancialCategory extends Model
 {
-    protected $fillable = [
-        'parent_id', 'name', 'type', 'color', 'icon', 'order',
+    
+    use BelongsToOwner;
+protected $fillable = [
+        'owner_id', 'parent_id', 'name', 'type', 'color', 'icon', 'order',
     ];
 
     public function parent(): BelongsTo
