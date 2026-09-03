@@ -65,11 +65,10 @@ class FinanceController extends Controller
         // Saldo consolidado = soma do saldo atual de cada conta ativa
         $totalBalance = (int) $accounts->sum(fn ($a) => $a->current_balance);
 
-        // "Total levantado" = receitas pagas de verdade (exclui a categoria técnica "Ajuste de saldo")
-        $adjustCatId = FinancialCategory::where('name', 'Ajuste de saldo')->pluck('id');
-        $totalRaised = (int) FinancialTransaction::where('type', 'income')->where('paid', true)
-            ->whereNotIn('category_id', $adjustCatId)
-            ->sum('amount');
+        // Saldo da conta corrente (primeira do tipo 'checking'; fallback: primeira conta)
+        $checking = $accounts->firstWhere('type', 'checking') ?? $accounts->first();
+        $checkingBalance = (int) ($checking?->current_balance ?? 0);
+        $checkingName = $checking?->name ?? 'Conta corrente';
 
         $pendingPayable = FinancialTransaction::where('paid', false)->where('type', 'expense')->sum('amount');
         $pendingReceivable = FinancialTransaction::where('paid', false)->where('type', 'income')->sum('amount');
@@ -148,7 +147,8 @@ class FinanceController extends Controller
             'refDate' => $ref->toDateString(),
             'summary' => [
                 'totalBalance' => $totalBalance,
-                'totalRaised' => $totalRaised,
+                'checkingBalance' => $checkingBalance,
+                'checkingName' => $checkingName,
                 'income' => (int) $income,
                 'expense' => (int) $expense,
                 'net' => (int) ($income - $expense),

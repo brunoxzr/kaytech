@@ -7,7 +7,7 @@ import { Greeting } from '../../../Components/Admin/Greeting';
 import { brl, brlShort } from '../../../Components/Admin/Finance/shared';
 
 interface Summary {
-    totalBalance: number; totalRaised: number; income: number; expense: number; net: number;
+    totalBalance: number; checkingBalance: number; checkingName: string; income: number; expense: number; net: number;
     pendingPayable: number; pendingReceivable: number; overdueCount: number;
 }
 interface AccountLite { id: number; name: string; type: string; color: string; balance: number; }
@@ -154,7 +154,7 @@ export default function FinanceDashboard({
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <Stat label="Total nas contas" value={brl(summary.totalBalance)} tone={summary.totalBalance >= 0 ? 'pos' : 'neg'} hint="saldo somado de todas as contas" />
-                <Stat label="Total levantado" value={brl(summary.totalRaised)} tone="default" hint="tudo que já entrou (histórico)" />
+                <Stat label={summary.checkingName} value={brl(summary.checkingBalance)} tone={summary.checkingBalance >= 0 ? 'default' : 'neg'} hint="saldo da conta corrente" />
                 <Stat label="Entradas no mês" value={brl(summary.income)} tone="pos" />
                 <Stat label="Resultado do mês" value={brl(summary.net)} tone={summary.net >= 0 ? 'pos' : 'neg'} />
             </div>
