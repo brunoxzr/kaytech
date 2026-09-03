@@ -164,7 +164,8 @@ class FinanceController extends Controller
             'balanceTrend' => $balanceTrend,
             'byCategory' => $byCategory,
             'budgets' => $budgets,
-            'goals' => FinancialGoal::orderBy('achieved')->get(),
+            'goals' => FinancialGoal::with('account')->orderBy('achieved')->get()
+                ->map(fn ($g) => array_merge($g->toArray(), ['current_amount' => $g->saved])),
             'recentTransactions' => $recentTransactions,
         ]);
     }
@@ -210,6 +211,21 @@ class FinanceController extends Controller
             'recurringCategories' => FinancialCategory::orderBy('name')->get(['id', 'name', 'type', 'color']),
             'budgetRefDate' => $ref->startOfMonth()->toDateString(),
             'budgetRows' => $budgetRows,
+            'goals' => FinancialGoal::with('account')->orderBy('achieved')->orderBy('id')->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'target_amount' => $g->target_amount / 100,
+                    'current_amount' => $g->current_amount / 100,
+                    'saved' => $g->saved,
+                    'account_id' => $g->account_id,
+                    'account_name' => $g->account?->name,
+                    'target_date' => $g->target_date?->toDateString(),
+                    'color' => $g->color,
+                    'achieved' => $g->achieved,
+                ]),
+            'goalAccounts' => FinancialAccount::where('archived', false)->orderBy('order')->get(['id', 'name'])
+                ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'balance' => $a->current_balance]),
         ]);
     }
 
@@ -624,9 +640,7 @@ class FinanceController extends Controller
 
     public function updateGoal(Request $request, FinancialGoal $goal)
     {
-        $data = $this->validateGoal($request);
-        $data['achieved'] = $data['current_amount'] >= $data['target_amount'];
-        $goal->update($data);
+        $goal->update($this->validateGoal($request));
 
         return back()->with('success', 'Meta atualizada.');
     }
@@ -643,13 +657,17 @@ class FinanceController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:120',
             'target_amount' => 'required|numeric|min:0.01',
-            'current_amount' => 'required|numeric|min:0',
+            'current_amount' => 'nullable|numeric|min:0',
+            'account_id' => 'nullable|exists:financial_accounts,id',
             'target_date' => 'nullable|date',
             'color' => 'required|string|max:20',
         ]);
 
         $data['target_amount'] = (int) round($data['target_amount'] * 100);
-        $data['current_amount'] = (int) round($data['current_amount'] * 100);
+        // Vinculada a conta → o "guardado" vem do saldo; zera o manual.
+        $data['current_amount'] = ! empty($data['account_id'])
+            ? 0
+            : (int) round(($data['current_amount'] ?? 0) * 100);
 
         return $data;
     }
