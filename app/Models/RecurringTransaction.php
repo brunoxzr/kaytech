@@ -17,9 +17,9 @@ protected $fillable = [
 
     protected $casts = [
         'amount' => 'integer',
-        'starts_on' => 'date',
-        'ends_on' => 'date',
-        'last_generated_on' => 'date',
+        'starts_on' => 'date:Y-m-d',
+        'ends_on' => 'date:Y-m-d',
+        'last_generated_on' => 'date:Y-m-d',
         'active' => 'boolean',
     ];
 

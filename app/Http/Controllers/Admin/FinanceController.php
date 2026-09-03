@@ -17,10 +17,38 @@ use Inertia\Response;
 
 class FinanceController extends Controller
 {
+    /** Cria as categorias padrão para um usuário que ainda não tem nenhuma. */
+    private function seedDefaultsFor(?int $ownerId): void
+    {
+        if (! $ownerId || FinancialCategory::where('owner_id', $ownerId)->exists()) {
+            return;
+        }
+
+        $expenses = [
+            ['Moradia', '#F59E0B'], ['Alimentação', '#EF4444'], ['Transporte', '#3B82F6'],
+            ['Saúde', '#10B981'], ['Educação', '#8B5CF6'], ['Lazer', '#EC4899'],
+            ['Assinaturas', '#6366F1'], ['Impostos e Taxas', '#64748B'],
+            ['Investimentos', '#14B8A6'], ['Outros', '#6B7280'],
+        ];
+        $incomes = [
+            ['Salário', '#22C55E'], ['Freelance / Projetos', '#10B981'],
+            ['Rendimentos', '#3B82F6'], ['Reembolsos', '#A3E635'], ['Outros', '#6B7280'],
+        ];
+
+        foreach ($expenses as $i => [$name, $color]) {
+            FinancialCategory::create(['owner_id' => $ownerId, 'name' => $name, 'type' => 'expense', 'color' => $color, 'order' => $i]);
+        }
+        foreach ($incomes as $i => [$name, $color]) {
+            FinancialCategory::create(['owner_id' => $ownerId, 'name' => $name, 'type' => 'income', 'color' => $color, 'order' => $i]);
+        }
+    }
+
     /* ===================== DASHBOARD ===================== */
 
     public function dashboard(Request $request): Response
     {
+        $this->seedDefaultsFor(auth()->id());
+
         $ref = $request->date
             ? Carbon::parse($request->date)->startOfMonth()
             : Carbon::now()->startOfMonth();
@@ -140,6 +168,8 @@ class FinanceController extends Controller
     /** Página única "Config" — contas, categorias, recorrências e orçamentos em abas. */
     public function config(Request $request): Response
     {
+        $this->seedDefaultsFor(auth()->id());
+
         $ref = $request->date ? Carbon::parse($request->date) : Carbon::now();
         $year = $ref->year;
         $month = $ref->month;

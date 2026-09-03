@@ -16,7 +16,7 @@ class Client extends Model
     protected $casts = [
         'deal_value' => 'integer',
         'tags' => 'array',
-        'next_action_at' => 'date',
+        'next_action_at' => 'date:Y-m-d',
     ];
 
     public const STATUSES = ['prospect', 'contacted', 'proposal', 'won', 'lost'];

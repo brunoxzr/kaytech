@@ -16,7 +16,7 @@ protected $fillable = [
     protected $casts = [
         'target_amount' => 'integer',
         'current_amount' => 'integer',
-        'target_date' => 'date',
+        'target_date' => 'date:Y-m-d',
         'achieved' => 'boolean',
     ];
 }
