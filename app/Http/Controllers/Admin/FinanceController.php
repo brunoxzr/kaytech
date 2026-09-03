@@ -62,6 +62,9 @@ class FinanceController extends Controller
         $income = $monthTx->where('type', 'income')->where('paid', true)->sum('amount');
         $expense = $monthTx->where('type', 'expense')->where('paid', true)->sum('amount');
 
+        // Saldo consolidado = soma do saldo atual de cada conta ativa
+        $totalBalance = (int) $accounts->sum(fn ($a) => $a->current_balance);
+
         // "Total levantado" = receitas pagas de verdade (exclui a categoria técnica "Ajuste de saldo")
         $adjustCatId = FinancialCategory::where('name', 'Ajuste de saldo')->pluck('id');
         $totalRaised = (int) FinancialTransaction::where('type', 'income')->where('paid', true)
@@ -144,6 +147,7 @@ class FinanceController extends Controller
         return Inertia::render('Admin/Finance/Dashboard', [
             'refDate' => $ref->toDateString(),
             'summary' => [
+                'totalBalance' => $totalBalance,
                 'totalRaised' => $totalRaised,
                 'income' => (int) $income,
                 'expense' => (int) $expense,

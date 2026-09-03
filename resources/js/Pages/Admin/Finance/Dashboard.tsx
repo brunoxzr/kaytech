@@ -7,9 +7,10 @@ import { Greeting } from '../../../Components/Admin/Greeting';
 import { brl, brlShort } from '../../../Components/Admin/Finance/shared';
 
 interface Summary {
-    totalRaised: number; income: number; expense: number; net: number;
+    totalBalance: number; totalRaised: number; income: number; expense: number; net: number;
     pendingPayable: number; pendingReceivable: number; overdueCount: number;
 }
+interface AccountLite { id: number; name: string; type: string; color: string; balance: number; }
 interface CashflowPoint { label: string; income: number; expense: number; }
 interface CategorySlice { name: string; color: string; total: number; }
 interface BudgetRow { category: string; color: string; planned: number; spent: number; }
@@ -21,6 +22,7 @@ interface TxRow {
 interface Props {
     refDate: string;
     summary: Summary;
+    accounts: AccountLite[];
     cashflow: CashflowPoint[];
     balanceTrend: { label: string; balance: number }[];
     byCategory: CategorySlice[];
@@ -122,7 +124,7 @@ function DonutChart({ data }: { data: CategorySlice[] }) {
 }
 
 export default function FinanceDashboard({
-    refDate, summary, cashflow, balanceTrend, byCategory, budgets, goals, recentTransactions,
+    refDate, summary, accounts, cashflow, balanceTrend, byCategory, budgets, goals, recentTransactions,
 }: Props) {
     const [goalModal, setGoalModal] = React.useState(false);
     const goalForm = useForm({ name: '', target_amount: '', current_amount: '0', target_date: '', color: '#1F7A3D' });
@@ -151,11 +153,36 @@ export default function FinanceDashboard({
             <Head title="Finanças — Admin KayTech" />
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <Stat label="Total levantado" value={brl(summary.totalRaised)} tone="pos" hint="todas as entradas já recebidas" />
+                <Stat label="Total nas contas" value={brl(summary.totalBalance)} tone={summary.totalBalance >= 0 ? 'pos' : 'neg'} hint="saldo somado de todas as contas" />
+                <Stat label="Total levantado" value={brl(summary.totalRaised)} tone="default" hint="tudo que já entrou (histórico)" />
                 <Stat label="Entradas no mês" value={brl(summary.income)} tone="pos" />
-                <Stat label="Saídas no mês" value={brl(summary.expense)} tone="neg" />
                 <Stat label="Resultado do mês" value={brl(summary.net)} tone={summary.net >= 0 ? 'pos' : 'neg'} />
             </div>
+
+            {/* Saldo por conta */}
+            {accounts.length > 0 && (
+                <Panel>
+                    <PanelTitle
+                        action={<Link href="/admin/financas/config" className="text-[12px] ui-t-soft hover:ui-t">Gerenciar</Link>}
+                    >
+                        Saldo por conta
+                    </PanelTitle>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {accounts.map((a) => (
+                            <div key={a.id} className="flex items-center justify-between rounded-lg border ui-b px-3 py-2.5">
+                                <span className="flex items-center gap-2 text-[13px] ui-t">
+                                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
+                                    {a.name}
+                                </span>
+                                <span className={`text-[13px] font-semibold ${a.balance >= 0 ? 'ui-t' : 'ui-neg'}`}
+                                      style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                    {brl(a.balance)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </Panel>
+            )}
 
             {(summary.pendingPayable > 0 || summary.pendingReceivable > 0) && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
