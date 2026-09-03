@@ -31,6 +31,17 @@ Route::domain('brunokay.kaytech.com.br')->group(function () {
     Route::post('/contato', [BrunoContactController::class, 'store'])->name('brunokay.domain.contact.store');
 });
 
+// Subdomínio de Finanças — mesma app, entra direto no painel financeiro.
+Route::domain('financas.kaytech.com.br')->group(function () {
+    Route::get('/', function () {
+        return auth()->check()
+            ? redirect()->route('admin.finance.dashboard')
+            : redirect()->route('admin.login');
+    });
+    // qualquer outra rota do subdomínio cai no admin normal (as rotas /admin/* já existem)
+    Route::get('/{any}', fn () => redirect('/admin/financas'))->where('any', '^(?!admin).*$');
+});
+
 // Public Root Redirect
 Route::get('/', function () {
     $locale = cookie('kaytech_locale') ?? session('locale', 'pt-BR');
@@ -83,14 +94,23 @@ Route::prefix('admin')->group(function () {
 
     // Protected Admin Routes
     Route::middleware('auth')->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-        // Jarvis — assistente IA do painel
+        // Jarvis — assistente IA (admin: tudo; finance: só ferramentas de finanças)
         Route::post('/jarvis', [\App\Http\Controllers\Admin\JarvisController::class, 'chat'])
             ->middleware('throttle:30,1')->name('admin.jarvis');
 
+        /* ---------- Rotas exclusivas de ADMIN ---------- */
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+
         // Generic media upload (used by all admin image fields)
         Route::post('/upload', [MediaUploadController::class, 'store'])->name('admin.upload');
+
+        // Usuários do painel (admin cria os operadores de finanças)
+        Route::get('/usuarios', [\App\Http\Controllers\Admin\UserAdminController::class, 'index'])->name('admin.users.index');
+        Route::post('/usuarios', [\App\Http\Controllers\Admin\UserAdminController::class, 'store'])->name('admin.users.store');
+        Route::put('/usuarios/{user}', [\App\Http\Controllers\Admin\UserAdminController::class, 'update'])->name('admin.users.update');
+        Route::delete('/usuarios/{user}', [\App\Http\Controllers\Admin\UserAdminController::class, 'destroy'])->name('admin.users.destroy');
 
         // Projects Admin CRUD
         Route::get('/projetos', [ProjectAdminController::class, 'index'])->name('admin.projects.index');
@@ -157,9 +177,10 @@ Route::prefix('admin')->group(function () {
         Route::delete('/clientes/{client}', [ClientController::class, 'destroy'])->name('admin.clients.destroy');
         Route::post('/clientes/{client}/notas', [ClientController::class, 'addNote'])->name('admin.clients.notes.store');
         Route::delete('/clientes/{client}/notas/{note}', [ClientController::class, 'destroyNote'])->name('admin.clients.notes.destroy');
+        }); // fim role:admin
 
-        // ===================== Finanças =====================
-        Route::prefix('financas')->name('admin.finance.')->group(function () {
+        // ===================== Finanças (admin OU finance) =====================
+        Route::middleware('role:admin,finance')->prefix('financas')->name('admin.finance.')->group(function () {
             Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
             Route::get('/config', [FinanceController::class, 'config'])->name('config');
 

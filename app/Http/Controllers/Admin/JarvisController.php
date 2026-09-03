@@ -59,7 +59,8 @@ SYS;
                 : GeminiClient::modelTurn($m['text']);
         }
 
-        $tools = JarvisTools::declarations();
+        // Usuário 'finance' só enxerga as ferramentas de finanças
+        $tools = JarvisTools::declarations($request->user()->role === 'finance' ? 'finance' : 'all');
 
         try {
             // Loop de function calling (máx 6 rodadas)

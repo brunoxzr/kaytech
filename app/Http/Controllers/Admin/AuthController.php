@@ -11,7 +11,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('admin.dashboard');
+            return redirect($this->homeFor(Auth::user()));
         }
 
         return view('admin.login');
@@ -24,9 +24,10 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('admin.dashboard'));
+
+            return redirect()->intended($this->homeFor(Auth::user()));
         }
 
         return back()->with('error', 'Credenciais inválidas. Verifique seu e-mail e senha.');
@@ -39,5 +40,13 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('admin.login');
+    }
+
+    /** Cada papel tem uma tela inicial. */
+    private function homeFor($user): string
+    {
+        return $user->role === 'finance'
+            ? route('admin.finance.dashboard')
+            : route('admin.dashboard');
     }
 }

@@ -21,6 +21,7 @@ interface NavItem {
     icon: typeof LayoutDashboard;
     section?: string;
     exact?: boolean;
+    financeAllowed?: boolean; // visível também para usuários 'finance'
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -28,9 +29,9 @@ const NAV_ITEMS: NavItem[] = [
 
     { href: '/admin/clientes', label: 'Clientes', icon: Users, section: 'CRM' },
 
-    { href: '/admin/financas', label: 'Visão geral', icon: Wallet, section: 'Finanças', exact: true },
-    { href: '/admin/financas/lancamentos', label: 'Lançamentos', icon: ArrowLeftRight, section: 'Finanças' },
-    { href: '/admin/financas/config', label: 'Config', icon: Tags, section: 'Finanças' },
+    { href: '/admin/financas', label: 'Visão geral', icon: Wallet, section: 'Finanças', exact: true, financeAllowed: true },
+    { href: '/admin/financas/lancamentos', label: 'Lançamentos', icon: ArrowLeftRight, section: 'Finanças', financeAllowed: true },
+    { href: '/admin/financas/config', label: 'Config', icon: Tags, section: 'Finanças', financeAllowed: true },
 
     { href: '/admin/projetos', label: 'Projetos', icon: FolderGit2, section: 'Site' },
     { href: '/admin/produtos', label: 'Produtos', icon: Package, section: 'Site' },
@@ -39,15 +40,18 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin/carreira', label: 'Trajetória', icon: Milestone, section: 'Site' },
     { href: '/admin/encurtador', label: 'Encurtador', icon: Scissors, section: 'Site' },
     { href: '/admin/contatos', label: 'Leads', icon: MessageSquare, section: 'Site' },
+    { href: '/admin/usuarios', label: 'Usuários', icon: Users, section: 'Site' },
     { href: '/admin/configuracoes', label: 'Configurações', icon: Settings, section: 'Site' },
 ];
 
-const NavList: React.FC<{ collapsed: boolean; path: string }> = ({ collapsed, path }) => (
+const NavList: React.FC<{ collapsed: boolean; path: string; role: string }> = ({ collapsed, path, role }) => {
+    const items = role === 'finance' ? NAV_ITEMS.filter((i) => i.financeAllowed) : NAV_ITEMS;
+    return (
     <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {NAV_ITEMS.map((item, i) => {
+        {items.map((item, i) => {
             const isActive = item.exact ? path === item.href : path.startsWith(item.href);
             const Icon = item.icon;
-            const showSection = !collapsed && item.section && item.section !== NAV_ITEMS[i - 1]?.section;
+            const showSection = !collapsed && item.section && item.section !== items[i - 1]?.section;
             return (
                 <React.Fragment key={item.href}>
                     {showSection && (
@@ -69,7 +73,8 @@ const NavList: React.FC<{ collapsed: boolean; path: string }> = ({ collapsed, pa
             );
         })}
     </nav>
-);
+    );
+};
 
 const jarvisGreeting = () => {
     const h = new Date().getHours();
@@ -84,7 +89,8 @@ const jarvisGreeting = () => {
 };
 
 const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, children, headerAction }) => {
-    const { url } = usePage();
+    const { url, props } = usePage<{ auth?: { user?: { role?: string } | null } }>();
+    const role = props.auth?.user?.role ?? 'admin';
     const { theme, toggleTheme, sidebarCollapsed, toggleSidebar } = useAdminTheme();
     const [mobileOpen, setMobileOpen] = useState(false);
     const path = url.split('?')[0];
@@ -123,7 +129,7 @@ const AdminLayoutInner: React.FC<AdminLayoutProps> = ({ title, subtitle, childre
                     </button>
                 </div>
 
-                <NavList collapsed={collapsed} path={path} />
+                <NavList collapsed={collapsed} path={path} role={role} />
 
                 <div className={`border-t ui-b p-3 ${collapsed ? 'space-y-1' : 'space-y-0.5'}`}>
                     <button

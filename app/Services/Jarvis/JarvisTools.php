@@ -18,8 +18,25 @@ use Illuminate\Support\Facades\Log;
  */
 class JarvisTools
 {
-    /** Declarações no formato function_declarations do Gemini. */
-    public static function declarations(): array
+    /** Ferramentas que um usuário 'finance' pode usar. */
+    private const FINANCE_TOOLS = [
+        'saldo_contas', 'resumo_mes', 'total_levantado', 'ultimos_lancamentos',
+        'gastos_por_categoria', 'criar_lancamento',
+    ];
+
+    /** Declarações no formato function_declarations do Gemini. $scope: 'all' | 'finance'. */
+    public static function declarations(string $scope = 'all'): array
+    {
+        $decls = self::allDeclarations()[0]['function_declarations'];
+
+        if ($scope === 'finance') {
+            $decls = array_values(array_filter($decls, fn ($d) => in_array($d['name'], self::FINANCE_TOOLS, true)));
+        }
+
+        return [['function_declarations' => $decls]];
+    }
+
+    private static function allDeclarations(): array
     {
         return [[
             'function_declarations' => [
