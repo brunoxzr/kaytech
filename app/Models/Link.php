@@ -14,6 +14,7 @@ class Link extends Model
         'title',
         'url',
         'icon_name',
+        'icon_image',
         'order',
         'active',
     ];

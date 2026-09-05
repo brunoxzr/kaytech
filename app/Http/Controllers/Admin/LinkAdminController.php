@@ -29,6 +29,7 @@ class LinkAdminController extends Controller
             'title' => 'required|string|max:255',
             'url' => 'required|string|max:2048',
             'icon_name' => 'nullable|string|max:100',
+            'icon_image' => 'nullable|string|max:255',
             'order' => 'integer',
             'active' => 'boolean',
         ]);
@@ -45,6 +46,7 @@ class LinkAdminController extends Controller
             'title' => 'required|string|max:255',
             'url' => 'required|string|max:2048',
             'icon_name' => 'nullable|string|max:100',
+            'icon_image' => 'nullable|string|max:255',
             'order' => 'integer',
             'active' => 'boolean',
         ]);

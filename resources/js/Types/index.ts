@@ -91,6 +91,7 @@ export type LinkItem = {
     title: string;
     url: string;
     icon_name?: string | null;
+    icon_image?: string | null;
     order: number;
     active: boolean;
 };

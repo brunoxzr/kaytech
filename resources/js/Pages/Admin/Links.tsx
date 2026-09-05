@@ -64,6 +64,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
         title: '',
         url: '',
         icon_name: '',
+        icon_image: '',
         order: 1,
         active: true as boolean,
     });
@@ -75,7 +76,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
 
     const openNew = () => {
         reset();
-        setData({ group: activeGroup, title: '', url: '', icon_name: '', order: filteredLinks.length + 1, active: true });
+        setData({ group: activeGroup, title: '', url: '', icon_name: '', icon_image: '', order: filteredLinks.length + 1, active: true });
         setEditingLink(null);
         setModalOpen(true);
     };
@@ -87,6 +88,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
             title: link.title,
             url: link.url,
             icon_name: link.icon_name || '',
+            icon_image: link.icon_image || '',
             order: link.order,
             active: link.active,
         });
@@ -108,6 +110,7 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                 title: link.title,
                 url: link.url,
                 icon_name: link.icon_name || '',
+                icon_image: link.icon_image || '',
                 order: link.order,
                 active: !link.active,
             },
@@ -311,6 +314,9 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                             <div key={link.id} className="ui-subtle border ui-b rounded-xl p-4 flex items-center gap-3">
                                 <GripVertical className="w-4 h-4 ui-t-faint shrink-0" />
                                 <span className="text-xs ui-t-faint shrink-0 w-6">{String(link.order).padStart(2, '0')}</span>
+                                {link.icon_image && (
+                                    <img src={link.icon_image} alt="" className="h-7 w-7 rounded-md object-contain shrink-0" />
+                                )}
                                 <div className="min-w-0 flex-1">
                                     <div className="font-medium ui-t truncate text-sm">{link.title}</div>
                                     <div className="text-xs ui-t-faint truncate">{link.url}</div>
@@ -384,9 +390,37 @@ export default function AdminLinks({ links, settings }: AdminLinksProps) {
                                     className="w-full ui-subtle border ui-b rounded-xl px-4 py-2.5 text-sm ui-t"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-xs uppercase ui-t-soft mb-1">Logo / ícone (upload)</label>
+                                <div className="flex items-start gap-3">
+                                    {data.icon_image ? (
+                                        <div className="relative shrink-0">
+                                            <img src={data.icon_image} alt="" className="h-12 w-12 rounded-lg object-contain ui-subtle border ui-b" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setData('icon_image', '')}
+                                                className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] leading-none"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ) : null}
+                                    <div className="flex-1">
+                                        <ImageUpload
+                                            label=""
+                                            value={data.icon_image}
+                                            onChange={(p) => setData('icon_image', p)}
+                                            folder="links"
+                                        />
+                                        <p className="text-[11px] ui-t-faint mt-1">
+                                            Exibido a 28×28 no botão. PNG quadrado funciona melhor.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs uppercase ui-t-soft mb-1">Ícone</label>
+                                    <label className="block text-xs uppercase ui-t-soft mb-1">Nome do ícone (opcional)</label>
                                     <input
                                         type="text"
                                         value={data.icon_name}
