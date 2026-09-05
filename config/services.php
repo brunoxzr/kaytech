@@ -12,6 +12,12 @@ return [
         'whatsapp' => env('JARVIS_WHATSAPP', '5543988506395'),
     ],
 
+    'apify' => [
+        'token' => env('APIFY_TOKEN'),
+        // Ator do scraper de Google Maps.
+        'places_actor' => env('APIFY_PLACES_ACTOR', 'compass~crawler-google-places'),
+    ],
+
 
     /*
     |--------------------------------------------------------------------------

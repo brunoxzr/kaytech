@@ -7,7 +7,9 @@ import { Panel, Button, Field, Input, Select, Badge } from '../../Components/Adm
 interface Lead {
     nome: string; telefone: string; whatsapp: string; endereco: string;
     instagram: string; facebook: string; site: string;
-    tem_site: 'sim' | 'rede_social' | 'nao'; resumo: string;
+    tem_site: 'sim' | 'rede_social' | 'nao';
+    avaliacoes: number; nota: number | null; categoria: string;
+    maps_url: string; resumo: string;
 }
 interface Source { title: string | null; uri: string }
 interface Props { niches: string[] }
@@ -31,6 +33,7 @@ export default function Prospector({ niches }: Props) {
     const [sources, setSources] = React.useState<Source[]>([]);
     const [note, setNote] = React.useState<string | null>(null);
     const [onlyNoSite, setOnlyNoSite] = React.useState(true);
+    const [minReviews, setMinReviews] = React.useState(10);
     const [saved, setSaved] = React.useState<Set<string>>(new Set());
 
     const run = async (e: React.FormEvent) => {
@@ -57,7 +60,10 @@ export default function Prospector({ niches }: Props) {
         }
     };
 
-    const shown = onlyNoSite ? leads.filter((l) => l.tem_site !== 'sim') : leads;
+    const shown = leads.filter((l) =>
+        (!onlyNoSite || l.tem_site !== 'sim') &&
+        (minReviews === 0 || (l.avaliacoes ?? 0) >= minReviews),
+    );
 
     const saveClient = (l: Lead) => {
         router.post('/admin/prospeccao/salvar', { ...l, niche, city }, {
@@ -67,10 +73,10 @@ export default function Prospector({ niches }: Props) {
     };
 
     const exportCsv = () => {
-        const head = ['Nome', 'Telefone', 'WhatsApp', 'Endereço', 'Instagram', 'Site', 'Situação', 'Resumo'];
+        const head = ['Nome', 'Categoria', 'Telefone', 'Endereço', 'Instagram', 'Site', 'Situação', 'Avaliações', 'Nota', 'Maps'];
         const rows = shown.map((l) => [
-            l.nome, l.telefone, l.whatsapp, l.endereco, l.instagram, l.site,
-            SITE_BADGE[l.tem_site].label, l.resumo,
+            l.nome, l.categoria, l.telefone, l.endereco, l.instagram, l.site,
+            SITE_BADGE[l.tem_site].label, l.avaliacoes, l.nota ?? '', l.maps_url,
         ]);
         const csvBody = [head, ...rows]
             .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
@@ -113,12 +119,12 @@ export default function Prospector({ niches }: Props) {
                     <Input className="mt-3" autoFocus placeholder="Digite o nicho" onChange={(e) => setNiche(e.target.value)} />
                 )}
                 <p className="mt-3 text-[12px] ui-t-faint">
-                    A busca usa o Google via IA. Os dados podem variar — confirme telefone e Instagram antes de contatar.
+                    Dados reais do Google Maps (via Apify). Ordenados por: sem site primeiro, depois mais avaliados.
                 </p>
             </Panel>
 
             {loading && (
-                <Panel><p className="py-8 text-center text-[13px] ui-t-faint">Pesquisando no Google…</p></Panel>
+                <Panel><p className="py-8 text-center text-[13px] ui-t-faint">Buscando no Google Maps… (pode levar 1-2 min)</p></Panel>
             )}
 
             {!loading && note && (
@@ -127,14 +133,21 @@ export default function Prospector({ niches }: Props) {
 
             {!loading && leads.length > 0 && (
                 <>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-4">
                         <label className="flex items-center gap-2 text-[13px] ui-t-soft">
                             <input type="checkbox" checked={onlyNoSite} onChange={(e) => setOnlyNoSite(e.target.checked)}
                                    className="rounded ui-b-strong ui-subtle" />
-                            Esconder quem já tem site próprio
+                            Esconder quem já tem site
                         </label>
-                        <span className="text-[12px] ui-t-faint">{shown.length} lead{shown.length !== 1 ? 's' : ''}</span>
-                        <Button variant="ghost" onClick={exportCsv}><Download className="h-4 w-4" /> CSV</Button>
+                        <label className="flex items-center gap-2 text-[13px] ui-t-soft">
+                            Mín. avaliações
+                            <select value={minReviews} onChange={(e) => setMinReviews(Number(e.target.value))}
+                                    className="rounded-lg border ui-b-strong bg-transparent px-2 py-1 text-[12px]">
+                                {[0, 5, 10, 20, 50].map((n) => <option key={n} value={n}>{n === 0 ? 'todas' : n}</option>)}
+                            </select>
+                        </label>
+                        <span className="text-[12px] ui-t-faint">{shown.length} de {leads.length}</span>
+                        <Button variant="ghost" onClick={exportCsv} className="ml-auto"><Download className="h-4 w-4" /> CSV</Button>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -145,14 +158,19 @@ export default function Prospector({ niches }: Props) {
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-[14px] font-semibold ui-t">{l.nome}</p>
-                                            {l.resumo && <p className="mt-0.5 text-[12px] ui-t-faint">{l.resumo}</p>}
+                                            <p className="mt-0.5 text-[12px] ui-t-faint">
+                                                {l.categoria}
+                                                {(l.avaliacoes > 0 || l.nota) && (
+                                                    <> · ★ {l.nota ?? '—'} ({l.avaliacoes} aval.)</>
+                                                )}
+                                            </p>
                                         </div>
                                         <Badge tone={b.tone}>{b.label}</Badge>
                                     </div>
 
                                     <div className="space-y-1 text-[12px] ui-t-soft">
                                         {l.endereco && <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 ui-t-faint" />{l.endereco}</p>}
-                                        {(l.telefone || l.whatsapp) && <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 ui-t-faint" />{l.telefone || l.whatsapp}</p>}
+                                        {l.telefone && <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 ui-t-faint" />{l.telefone}</p>}
                                     </div>
 
                                     <div className="flex flex-wrap gap-1.5">
@@ -175,7 +193,7 @@ export default function Prospector({ niches }: Props) {
                                             <a href={l.site.startsWith('http') ? l.site : `https://${l.site}`} target="_blank" rel="noopener noreferrer"
                                                className="ui-badge hover:ui-subtle"><Globe className="h-3 w-3" /> site</a>
                                         )}
-                                        <a href={`https://www.google.com/maps/search/${encodeURIComponent(l.nome + ' ' + city)}`}
+                                        <a href={l.maps_url || `https://www.google.com/maps/search/${encodeURIComponent(l.nome + " " + city)}`}
                                            target="_blank" rel="noopener noreferrer" className="ui-badge hover:ui-subtle">
                                             <ExternalLink className="h-3 w-3" /> Maps
                                         </a>

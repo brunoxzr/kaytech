@@ -37,17 +37,18 @@ class ProspectorController extends Controller
                 return response()->json(['leads' => [], 'sources' => [], 'note' => 'Informe cidade e nicho.'], 200);
             }
 
-            $result = app(ProspectorService::class)->search($city, $niche, $limit);
+            $result = (new ProspectorService())->search($city, $niche, $limit);
 
             return response()->json($result);
         } catch (\Throwable $e) {
-            Log::error('[Prospector] ' . $e->getMessage());
+            Log::error('[Prospector] ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
 
-            $msg = str_contains($e->getMessage(), '429') || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED')
-                ? 'Cota da IA atingida por agora. Tente novamente daqui a pouco.'
-                : (str_contains($e->getMessage(), '503') || str_contains($e->getMessage(), 'UNAVAILABLE')
-                    ? 'A IA está sobrecarregada. Tente de novo em alguns segundos.'
-                    : 'Não foi possível concluir a busca agora.');
+            $m = $e->getMessage();
+            $msg = str_contains($m, 'APIFY_TOKEN')
+                ? 'Configure o APIFY_TOKEN no servidor.'
+                : (str_contains($m, '402') || str_contains($m, 'usage limit')
+                    ? 'Crédito do Apify esgotado neste mês.'
+                    : 'Não foi possível concluir a busca agora. Tente de novo em instantes.');
 
             return response()->json(['leads' => [], 'sources' => [], 'note' => $msg], 200);
         }

@@ -2,113 +2,150 @@
 
 namespace App\Services\Prospector;
 
-use App\Services\Gemini\GeminiClient;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * Encontra empresas de um nicho numa cidade usando o Gemini com Google Search (grounding).
- * Foca em leads sem site próprio — bons alvos para vender landing page.
+ * Encontra empresas de um nicho numa cidade via Apify (scraper de Google Maps).
+ * Dados reais e estruturados: nome, telefone, endereço, site, nº de avaliações, Instagram.
+ * Foco em leads sem site próprio — bons alvos para vender landing page.
  */
 class ProspectorService
 {
+    private const SOCIAL_HOSTS = [
+        'instagram.com', 'facebook.com', 'fb.com', 'linktr.ee', 'linktree',
+        'ifood.com.br', 'wa.me', 'api.whatsapp.com', 'goo.gl', 'bit.ly',
+        'tiktok.com', 'twitter.com', 'x.com', 'youtube.com',
+    ];
+
     /**
      * @return array{leads: array<int, array>, sources: array, note: ?string}
      */
     public function search(string $city, string $niche, int $limit = 15): array
     {
-        $gemini = new GeminiClient();
-        if (! $gemini->configured()) {
-            throw new RuntimeException('GEMINI_API_KEY não configurada no servidor.');
+        $token = (string) config('services.apify.token');
+        if ($token === '') {
+            throw new RuntimeException('APIFY_TOKEN não configurado no servidor.');
         }
 
-        $limit = max(3, min(25, $limit));
+        $limit = max(3, min(60, $limit));
+        $actor = (string) config('services.apify.places_actor', 'compass~crawler-google-places');
 
-        $prompt = <<<PROMPT
-Pesquise no Google empresas do nicho "{$niche}" na cidade "{$city}" (Brasil).
-Priorize negócios pequenos/médios que NÃO tenham site próprio (só aparecem no Google Maps, Instagram, iFood, Facebook ou não têm nada).
+        $input = [
+            'searchStringsArray' => ["{$niche} em {$city}"],
+            'maxCrawledPlacesPerSearch' => $limit,
+            'language' => 'pt-BR',
+            'countryCode' => 'br',
+            // reduz o que é raspado → mais barato/rápido
+            'scrapePlaceDetailPage' => true,
+            'skipClosedPlaces' => true,
+            'maximumLeadsEnrichmentRecords' => 0,
+        ];
 
-Para cada empresa (até {$limit}), retorne o que encontrar de:
-- nome
-- telefone (com DDD, formato só dígitos se possível)
-- whatsapp (se diferente do telefone)
-- endereco (rua, bairro, cidade)
-- instagram (URL ou @)
-- facebook (URL)
-- site (URL do site PRÓPRIO, se tiver; deixe vazio se só tem Instagram/iFood/Facebook)
-- tem_site: "sim" se tem site próprio, "rede_social" se só tem Instagram/Facebook/iFood, "nao" se não tem nada
-- resumo: 1 frase sobre o que a empresa faz / o que dá pra ver do trabalho dela
-
-Responda APENAS com um JSON válido, sem texto antes ou depois, no formato:
-{"leads":[{"nome":"","telefone":"","whatsapp":"","endereco":"","instagram":"","facebook":"","site":"","tem_site":"nao","resumo":""}]}
-Se não achar nada, retorne {"leads":[]}.
-PROMPT;
-
-        $out = $gemini->generate(
-            [GeminiClient::userTurn($prompt)],
-            tools: [],
-            systemPrompt: 'Você é um pesquisador de prospecção B2B. Use a busca do Google para dados reais e atuais. Nunca invente empresas, telefones ou endereços — se não encontrar, deixe o campo vazio.',
-            webSearch: true,
+        // run-sync: executa e devolve o dataset direto (bom p/ até ~1-2 min).
+        $res = Http::timeout(180)->post(
+            "https://api.apify.com/v2/acts/{$actor}/run-sync-get-dataset-items?token={$token}&clean=true",
+            $input
         );
 
-        $leads = $this->parseLeads($out['text'] ?? '');
+        if ($res->failed()) {
+            throw new RuntimeException('Apify erro ' . $res->status() . ': ' . substr($res->body(), 0, 300));
+        }
+
+        $items = $res->json() ?: [];
+        $leads = $this->mapLeads($items);
 
         return [
             'leads' => $leads,
-            'sources' => $out['sources'] ?? [],
+            'sources' => [],
             'note' => $leads ? null : 'Nenhum resultado. Tente outro termo de nicho ou uma cidade maior.',
         ];
     }
 
-    private function parseLeads(string $text): array
+    private function mapLeads(array $items): array
     {
-        // remove cercas de código
-        $text = preg_replace('/^```(?:json)?|```$/m', '', trim($text));
-
-        // pega o primeiro { ... } que parecer JSON
-        if (preg_match('/\{.*\}/s', $text, $m)) {
-            $text = $m[0];
-        }
-
-        $data = json_decode($text, true);
-        $raw = is_array($data['leads'] ?? null) ? $data['leads'] : [];
-
-        $clean = [];
-        foreach ($raw as $l) {
-            $nome = trim((string) ($l['nome'] ?? ''));
-            if ($nome === '') {
+        $out = [];
+        foreach ($items as $it) {
+            $name = trim((string) ($it['title'] ?? $it['name'] ?? ''));
+            if ($name === '') {
                 continue;
             }
-            $site = trim((string) ($l['site'] ?? ''));
-            $temSite = strtolower((string) ($l['tem_site'] ?? ''));
-            if (! in_array($temSite, ['sim', 'rede_social', 'nao'], true)) {
-                $temSite = $site !== '' ? 'sim' : 'nao';
-            }
 
-            $clean[] = [
-                'nome' => $nome,
-                'telefone' => trim((string) ($l['telefone'] ?? '')),
-                'whatsapp' => trim((string) ($l['whatsapp'] ?? '')),
-                'endereco' => trim((string) ($l['endereco'] ?? '')),
-                'instagram' => $this->normalizeInstagram((string) ($l['instagram'] ?? '')),
-                'facebook' => trim((string) ($l['facebook'] ?? '')),
-                'site' => $site,
+            $website = trim((string) ($it['website'] ?? $it['url'] ?? ''));
+            $website = str_contains($website, 'google.com/maps') ? '' : $website;
+
+            [$temSite, $siteLimpo, $instagram, $facebook] = $this->classifySite($website, $it);
+
+            $phone = (string) ($it['phone'] ?? $it['phoneUnformatted'] ?? '');
+            $reviews = (int) ($it['reviewsCount'] ?? $it['reviews'] ?? 0);
+            $rating = $it['totalScore'] ?? $it['rating'] ?? null;
+
+            $addr = trim((string) ($it['address'] ?? implode(', ', array_filter([
+                $it['street'] ?? null, $it['neighborhood'] ?? null, $it['city'] ?? null, $it['state'] ?? null,
+            ]))));
+
+            $out[] = [
+                'nome' => $name,
+                'telefone' => preg_replace('/\s+/', ' ', $phone),
+                'whatsapp' => '',
+                'endereco' => $addr,
+                'instagram' => $instagram,
+                'facebook' => $facebook,
+                'site' => $siteLimpo,
                 'tem_site' => $temSite,
-                'resumo' => trim((string) ($l['resumo'] ?? '')),
+                'avaliacoes' => $reviews,
+                'nota' => $rating !== null ? (float) $rating : null,
+                'categoria' => (string) ($it['categoryName'] ?? ($it['categories'][0] ?? '')),
+                'maps_url' => (string) ($it['url'] ?? ''),
+                'resumo' => trim((string) ($it['description'] ?? '')),
             ];
         }
 
-        return $clean;
+        // ordena: sem site primeiro, depois por nº de avaliações desc
+        usort($out, function ($a, $b) {
+            $rank = ['nao' => 0, 'rede_social' => 1, 'sim' => 2];
+            return [$rank[$a['tem_site']], -$a['avaliacoes']] <=> [$rank[$b['tem_site']], -$b['avaliacoes']];
+        });
+
+        return $out;
     }
 
-    private function normalizeInstagram(string $v): string
+    /** @return array{0:string,1:string,2:string,3:string} [tem_site, site, instagram, facebook] */
+    private function classifySite(string $website, array $it): array
     {
-        $v = trim($v);
-        if ($v === '') {
-            return '';
+        $instagram = '';
+        $facebook = '';
+
+        // alguns atores trazem redes em campos próprios
+        foreach (['additionalInfo', 'socialProfiles', 'links'] as $k) {
+            foreach ((array) ($it[$k] ?? []) as $v) {
+                $v = is_array($v) ? ($v['url'] ?? '') : $v;
+                if (is_string($v) && str_contains($v, 'instagram.com')) {
+                    $instagram = $v;
+                }
+                if (is_string($v) && str_contains($v, 'facebook.com')) {
+                    $facebook = $v;
+                }
+            }
         }
-        if (str_starts_with($v, 'http')) {
-            return $v;
+
+        if ($website === '') {
+            return ['nao', '', $instagram, $facebook];
         }
-        return 'https://instagram.com/' . ltrim($v, '@/');
+
+        $host = strtolower((string) parse_url($website, PHP_URL_HOST));
+        foreach (self::SOCIAL_HOSTS as $s) {
+            if (str_contains($host, $s)) {
+                if (str_contains($s, 'instagram') && ! $instagram) {
+                    $instagram = $website;
+                }
+                if (str_contains($s, 'facebook') && ! $facebook) {
+                    $facebook = $website;
+                }
+                return ['rede_social', '', $instagram, $facebook];
+            }
+        }
+
+        return ['sim', $website, $instagram, $facebook];
     }
 }
