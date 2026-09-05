@@ -8,22 +8,25 @@ interface LinkListProps {
 export const LinkList: React.FC<LinkListProps> = ({ links }) => {
     if (links.length === 0) {
         return (
-            <p className="text-sm text-white/40 text-center">Nenhum link disponível no momento.</p>
+            <p className="text-center text-sm text-white/40">Nenhum link disponível no momento.</p>
         );
     }
 
     return (
-        <div className="w-full space-y-2">
+        <div className="w-full space-y-3">
             {links.map((link) => (
                 <a
                     key={link.id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-center w-full border border-white/10 hover:border-white/30 rounded-full px-5 py-3 transition-colors duration-300"
+                    className="group flex w-full items-center justify-between rounded-2xl border border-white/12 bg-white/4 px-5 py-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/8"
                 >
-                    <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                    <span className="text-sm font-medium text-white/85 transition-colors group-hover:text-white">
                         {link.title}
+                    </span>
+                    <span className="font-mono text-xs text-white/30 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white/70">
+                        →
                     </span>
                 </a>
             ))}
