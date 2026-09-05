@@ -122,6 +122,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/whatsapp/conversas/{chat}/enviar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'send'])->name('admin.wa.send');
         Route::post('/whatsapp/importar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'import'])->name('admin.wa.import');
         Route::get('/whatsapp/midia/{message}', [\App\Http\Controllers\Admin\WhatsAppController::class, 'media'])->name('admin.wa.media');
+        Route::get('/whatsapp/clientes/buscar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'searchClients'])->name('admin.wa.clients.search');
+        Route::patch('/whatsapp/conversas/{chat}/vincular', [\App\Http\Controllers\Admin\WhatsAppController::class, 'link'])->name('admin.wa.link');
         Route::get('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcast'])->name('admin.wa.broadcast');
         Route::post('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcastSend'])->name('admin.wa.broadcast.send');
 

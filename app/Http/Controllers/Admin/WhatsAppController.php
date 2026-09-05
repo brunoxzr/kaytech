@@ -22,7 +22,7 @@ class WhatsAppController extends Controller
     {
         $chats = WaChat::query()
             ->when(! $request->boolean('archived'), fn ($q) => $q->where('archived', false))
-            ->with('client:id,status')
+            ->with('client:id,name,status')
             ->orderByDesc('last_message_at')
             ->limit(300)
             ->get(['id', 'name', 'phone', 'is_group', 'profile_pic_url', 'last_message', 'last_message_at', 'unread', 'client_id'])
@@ -36,6 +36,8 @@ class WhatsAppController extends Controller
                 'last_message_at' => $c->last_message_at,
                 'unread' => $c->unread,
                 'client_id' => $c->client_id,
+                'client_name' => $c->client?->name,
+                'client_status' => $c->client?->status,
                 'is_lead' => in_array($c->client?->status, ['lead', 'prospect'], true),
             ]);
 
@@ -55,6 +57,35 @@ class WhatsAppController extends Controller
             'messages' => $chat->messages()->orderBy('sent_at')->limit(300)
                 ->get(['id', 'wamid', 'from_me', 'type', 'body', 'media_url', 'mimetype', 'reply_to_wamid', 'reply_to_preview', 'status', 'sent_at']),
         ]);
+    }
+
+    /** Busca clientes do CRM por nome/empresa/telefone (pra vincular manualmente a uma conversa). */
+    public function searchClients(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $clients = Client::query()
+            ->where(fn ($w) => $w->where('name', 'ilike', "%{$q}%")
+                ->orWhere('company', 'ilike', "%{$q}%")
+                ->orWhereRaw("regexp_replace(coalesce(phone,''), '\\D', '', 'g') LIKE ?", ['%' . preg_replace('/\D/', '', $q) . '%']))
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'company', 'phone', 'status']);
+
+        return response()->json($clients);
+    }
+
+    /** Vincula (ou desvincula, com client_id nulo) uma conversa a um cliente existente do CRM. */
+    public function link(Request $request, WaChat $chat)
+    {
+        $data = $request->validate(['client_id' => 'nullable|exists:clients,id']);
+
+        $chat->update(['client_id' => $data['client_id'] ?? null]);
+
+        return back(303);
     }
 
     /** Sincroniza (ou re-sincroniza) todo o histórico de chats/mensagens da Evolution. */

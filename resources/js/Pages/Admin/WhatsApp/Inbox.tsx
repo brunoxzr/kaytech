@@ -7,8 +7,10 @@ import { Button } from '../../../Components/Admin/ui';
 interface Chat {
     id: number; name: string | null; phone: string | null; is_group: boolean;
     profile_pic_url: string | null; last_message: string | null;
-    last_message_at: string | null; unread: number; client_id: number | null; is_lead: boolean;
+    last_message_at: string | null; unread: number; client_id: number | null;
+    client_name: string | null; client_status: string | null; is_lead: boolean;
 }
+interface ClientHit { id: number; name: string; company: string | null; phone: string | null; status: string; }
 interface Msg {
     id: number; wamid: string | null; from_me: boolean; type: string; body: string | null;
     media_url: string | null; mimetype: string | null;
@@ -140,6 +142,122 @@ function Bubble({ m }: { m: Msg }) {
             <span className="whitespace-pre-wrap break-words text-[13.5px]">{m.body}</span>
             {time}
         </>
+    );
+}
+
+function ClientLinkMenu({ chat }: { chat: Chat }) {
+    const [open, setOpen] = React.useState(false);
+    const [q, setQ] = React.useState('');
+    const [results, setResults] = React.useState<ClientHit[]>([]);
+    const [searching, setSearching] = React.useState(false);
+    const boxRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (!open) return;
+        const onClick = (e: MouseEvent) => {
+            if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onClick);
+        return () => document.removeEventListener('mousedown', onClick);
+    }, [open]);
+
+    React.useEffect(() => {
+        if (!open || q.trim().length < 2) { setResults([]); return; }
+        setSearching(true);
+        const t = setTimeout(async () => {
+            try {
+                const res = await fetch(`/admin/whatsapp/clientes/buscar?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+                setResults(await res.json());
+            } catch {
+                setResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [q, open]);
+
+    const link = (clientId: number | null) => {
+        router.patch(`/admin/whatsapp/conversas/${chat.id}/vincular`, { client_id: clientId }, { preserveScroll: true });
+        setOpen(false);
+        setQ('');
+    };
+
+    const createNew = () => {
+        router.post('/admin/clientes', {
+            name: title(chat), phone: chat.phone, status: 'lead',
+            source: 'WhatsApp', temperature: 'warm',
+        }, { preserveScroll: true });
+        setOpen(false);
+    };
+
+    return (
+        <div className="relative" ref={boxRef}>
+            {chat.client_id ? (
+                <button
+                    onClick={() => setOpen((v) => !v)}
+                    className="flex items-center gap-1 rounded-full bg-[#2a3942] px-2.5 py-1 text-[11px] text-[#e9edef] hover:bg-[#334148]"
+                >
+                    <ExternalLink className="h-3 w-3" /> {chat.client_name ?? 'no CRM'}
+                    {chat.client_status && <span className="opacity-60">· {chat.client_status}</span>}
+                </button>
+            ) : (
+                <button
+                    onClick={() => setOpen((v) => !v)}
+                    className="flex items-center gap-1 rounded-full bg-[#2a3942] px-2.5 py-1 text-[11px] text-[#e9edef] hover:bg-[#334148]"
+                >
+                    <UserPlus className="h-3 w-3" /> vincular lead
+                </button>
+            )}
+
+            {open && (
+                <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded-lg border border-[#222d34] bg-[#233138] p-2 shadow-xl">
+                    {chat.client_id && (
+                        <div className="mb-2 flex items-center justify-between border-b border-[#222d34] pb-2">
+                            <div className="min-w-0">
+                                <p className="truncate text-[12.5px] text-[#e9edef]">{chat.client_name}</p>
+                                <p className="text-[10.5px] text-[#8696a0]">{chat.client_status}</p>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                                <a href="/admin/clientes" className="rounded bg-[#2a3942] px-2 py-1 text-[10.5px] text-[#e9edef] hover:bg-[#334148]">abrir</a>
+                                <button onClick={() => link(null)} className="rounded bg-[#2a3942] px-2 py-1 text-[10.5px] text-red-300 hover:bg-[#334148]">desvincular</button>
+                            </div>
+                        </div>
+                    )}
+                    <input
+                        autoFocus
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Buscar lead/cliente por nome ou telefone…"
+                        className="w-full rounded bg-[#1c262b] px-2.5 py-1.5 text-[12.5px] text-[#e9edef] outline-none placeholder:text-[#8696a0]"
+                    />
+                    <div className="mt-1.5 max-h-48 overflow-y-auto">
+                        {searching && <p className="p-2 text-center text-[11px] text-[#8696a0]">Buscando…</p>}
+                        {!searching && q.trim().length >= 2 && results.length === 0 && (
+                            <p className="p-2 text-center text-[11px] text-[#8696a0]">Nada encontrado.</p>
+                        )}
+                        {results.map((r) => (
+                            <button
+                                key={r.id}
+                                onClick={() => link(r.id)}
+                                className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-[12.5px] text-[#e9edef] hover:bg-[#2a3942]"
+                            >
+                                <span className="truncate">{r.name}{r.company ? ` · ${r.company}` : ''}</span>
+                                <span className="shrink-0 text-[10.5px] text-[#8696a0]">{r.status}</span>
+                            </button>
+                        ))}
+                    </div>
+                    {chat.phone && (
+                        <button
+                            onClick={createNew}
+                            className="mt-1.5 flex w-full items-center gap-1.5 rounded border-t border-[#222d34] px-2 pt-2 text-[12px] text-[#00a884] hover:opacity-80"
+                        >
+                            <UserPlus className="h-3.5 w-3.5" /> criar novo lead com este contato
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -279,7 +397,7 @@ export default function Inbox({ chats, connection }: Props) {
 
             <div className="grid grid-cols-1 overflow-hidden rounded-xl border ui-b lg:grid-cols-[340px_1fr]" style={{ height: '78vh' }}>
                 {/* lista estilo WhatsApp */}
-                <div className="flex flex-col border-r ui-b bg-[#111b21]">
+                <div className="flex h-full min-h-0 flex-col border-r ui-b bg-[#111b21]">
                     <div className="space-y-2 p-2.5">
                         <div className="flex items-center gap-2 rounded-lg bg-[#202c33] px-3 py-1.5">
                             <Search className="h-3.5 w-3.5 text-[#8696a0]" />
@@ -304,7 +422,7 @@ export default function Inbox({ chats, connection }: Props) {
                             ))}
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="min-h-0 flex-1 overflow-y-auto">
                         {filtered.length === 0 && (
                             <p className="p-6 text-center text-[12px] text-[#8696a0]">Nenhuma conversa.</p>
                         )}
@@ -337,7 +455,7 @@ export default function Inbox({ chats, connection }: Props) {
                 </div>
 
                 {/* thread estilo WhatsApp */}
-                <div className="flex flex-col bg-[#0b141a]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize: '18px 18px' }}>
+                <div className="flex h-full min-h-0 flex-col bg-[#0b141a]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)', backgroundSize: '18px 18px' }}>
                     {!active ? (
                         <p className="grid flex-1 place-items-center text-[13px] text-[#8696a0]">Selecione uma conversa.</p>
                     ) : (
@@ -350,28 +468,10 @@ export default function Inbox({ chats, connection }: Props) {
                                         <p className="text-[11px] text-[#8696a0]">{active.phone ? `+${active.phone}` : active.is_group ? 'Grupo' : ''}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    {active.client_id ? (
-                                        <a href="/admin/clientes" className="flex items-center gap-1 rounded-full bg-[#2a3942] px-2.5 py-1 text-[11px] text-[#e9edef] hover:bg-[#334148]">
-                                            <ExternalLink className="h-3 w-3" /> no CRM
-                                        </a>
-                                    ) : active.phone ? (
-                                        <button
-                                            onClick={() =>
-                                                router.post('/admin/clientes', {
-                                                    name: title(active), phone: active.phone, status: 'lead',
-                                                    source: 'WhatsApp', temperature: 'warm',
-                                                }, { preserveScroll: true })
-                                            }
-                                            className="flex items-center gap-1 rounded-full bg-[#2a3942] px-2.5 py-1 text-[11px] text-[#e9edef] hover:bg-[#334148]"
-                                        >
-                                            <UserPlus className="h-3 w-3" /> criar cliente
-                                        </button>
-                                    ) : null}
-                                </div>
+                                <ClientLinkMenu chat={active} />
                             </div>
 
-                            <div className="flex-1 space-y-1.5 overflow-y-auto p-4">
+                            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-4">
                                 {loadingThread && <div className="grid place-items-center py-6"><Loader2 className="h-4 w-4 animate-spin text-[#8696a0]" /></div>}
                                 {!loadingThread && messages.length === 0 && (
                                     <p className="py-6 text-center text-[12px] text-[#8696a0]">Sem mensagens ainda.</p>
