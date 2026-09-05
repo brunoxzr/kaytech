@@ -33,7 +33,7 @@ class GeminiClient
      * @param  string|null  $systemPrompt
      * @return array  {text: ?string, functionCall: ?['name'=>..,'args'=>..], raw: array}
      */
-    public function generate(array $contents, array $tools = [], ?string $systemPrompt = null): array
+    public function generate(array $contents, array $tools = [], ?string $systemPrompt = null, bool $webSearch = false): array
     {
         if (! $this->configured()) {
             throw new RuntimeException('GEMINI_API_KEY não configurada.');
@@ -47,6 +47,10 @@ class GeminiClient
         if ($tools) {
             $payload['tools'] = $tools;
             $payload['tool_config'] = ['function_calling_config' => ['mode' => 'AUTO']];
+        }
+        if ($webSearch) {
+            // Grounding com Google Search — pesquisa real antes de responder.
+            $payload['tools'] = array_merge($payload['tools'] ?? [], [['google_search' => (object) []]]);
         }
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->key}";
@@ -78,9 +82,16 @@ class GeminiClient
             }
         }
 
+        // Fontes usadas pelo grounding (quando webSearch)
+        $sources = collect(data_get($data, 'candidates.0.groundingMetadata.groundingChunks', []))
+            ->map(fn ($c) => ['title' => data_get($c, 'web.title'), 'uri' => data_get($c, 'web.uri')])
+            ->filter(fn ($s) => $s['uri'])
+            ->values()->all();
+
         return [
             'text' => $text,
             'functionCall' => $functionCall,
+            'sources' => $sources,
             // parts brutas do modelo — devem ser reenviadas VERBATIM no histórico
             // (carregam thoughtSignature exigido pelos modelos novos)
             'modelParts' => $parts,

@@ -1,0 +1,217 @@
+import React from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Search, MapPin, Phone, AtSign, Globe, Download, UserPlus, Loader2, ExternalLink } from 'lucide-react';
+import { AdminLayout } from '../../Components/Admin/AdminLayout';
+import { Panel, Button, Field, Input, Select, Badge } from '../../Components/Admin/ui';
+
+interface Lead {
+    nome: string; telefone: string; whatsapp: string; endereco: string;
+    instagram: string; facebook: string; site: string;
+    tem_site: 'sim' | 'rede_social' | 'nao'; resumo: string;
+}
+interface Source { title: string | null; uri: string }
+interface Props { niches: string[] }
+
+const csrf = () => document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+const onlyDigits = (s: string) => s.replace(/\D/g, '');
+const waLink = (n: string) => `https://wa.me/${onlyDigits(n).length <= 11 ? '55' : ''}${onlyDigits(n)}`;
+
+const SITE_BADGE: Record<Lead['tem_site'], { label: string; tone: 'pos' | 'neg' | 'default' }> = {
+    nao: { label: 'sem site', tone: 'pos' },
+    rede_social: { label: 'só rede social', tone: 'default' },
+    sim: { label: 'tem site', tone: 'neg' },
+};
+
+export default function Prospector({ niches }: Props) {
+    const [city, setCity] = React.useState('');
+    const [niche, setNiche] = React.useState(niches[0] ?? '');
+    const [limit, setLimit] = React.useState(15);
+    const [loading, setLoading] = React.useState(false);
+    const [leads, setLeads] = React.useState<Lead[]>([]);
+    const [sources, setSources] = React.useState<Source[]>([]);
+    const [note, setNote] = React.useState<string | null>(null);
+    const [onlyNoSite, setOnlyNoSite] = React.useState(true);
+    const [saved, setSaved] = React.useState<Set<string>>(new Set());
+
+    const run = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!city.trim() || loading) return;
+        setLoading(true);
+        setNote(null);
+        try {
+            const res = await fetch('/admin/prospeccao/buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ city, niche, limit }),
+            });
+            const data = await res.json();
+            setLeads(data.leads ?? []);
+            setSources(data.sources ?? []);
+            setNote(data.note ?? null);
+            setSaved(new Set());
+        } catch {
+            setNote('Falha de conexão.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const shown = onlyNoSite ? leads.filter((l) => l.tem_site !== 'sim') : leads;
+
+    const saveClient = (l: Lead) => {
+        router.post('/admin/prospeccao/salvar', { ...l, niche, city }, {
+            preserveScroll: true,
+            onSuccess: () => setSaved((s) => new Set(s).add(l.nome)),
+        });
+    };
+
+    const exportCsv = () => {
+        const head = ['Nome', 'Telefone', 'WhatsApp', 'Endereço', 'Instagram', 'Site', 'Situação', 'Resumo'];
+        const rows = shown.map((l) => [
+            l.nome, l.telefone, l.whatsapp, l.endereco, l.instagram, l.site,
+            SITE_BADGE[l.tem_site].label, l.resumo,
+        ]);
+        const csvBody = [head, ...rows]
+            .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const url = URL.createObjectURL(new Blob(['﻿' + csvBody], { type: 'text/csv;charset=utf-8' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `leads-${niche}-${city}.csv`.toLowerCase().replace(/\s+/g, '-');
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <AdminLayout title="Prospecção" subtitle="Encontre empresas do nicho na cidade — foco em quem não tem site">
+            <Head title="Prospecção — Admin KayTech" />
+
+            <Panel>
+                <form onSubmit={run} className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+                    <Field label="Cidade" className="sm:col-span-4">
+                        <Input required placeholder="Londrina - PR" value={city} onChange={(e) => setCity(e.target.value)} />
+                    </Field>
+                    <Field label="Nicho" className="sm:col-span-4">
+                        <Select value={niche} onChange={(e) => setNiche(e.target.value)}>
+                            {niches.map((n) => <option key={n} value={n}>{n}</option>)}
+                            <option value={niche && !niches.includes(niche) ? niche : '__custom'}>Outro…</option>
+                        </Select>
+                    </Field>
+                    <Field label="Máx." className="sm:col-span-2">
+                        <Select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
+                            {[10, 15, 20, 25].map((n) => <option key={n} value={n}>{n}</option>)}
+                        </Select>
+                    </Field>
+                    <div className="sm:col-span-2">
+                        <Button type="submit" disabled={loading} className="w-full justify-center py-2.5">
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4" /> Buscar</>}
+                        </Button>
+                    </div>
+                </form>
+                {niche === '__custom' && (
+                    <Input className="mt-3" autoFocus placeholder="Digite o nicho" onChange={(e) => setNiche(e.target.value)} />
+                )}
+                <p className="mt-3 text-[12px] ui-t-faint">
+                    A busca usa o Google via IA. Os dados podem variar — confirme telefone e Instagram antes de contatar.
+                </p>
+            </Panel>
+
+            {loading && (
+                <Panel><p className="py-8 text-center text-[13px] ui-t-faint">Pesquisando no Google…</p></Panel>
+            )}
+
+            {!loading && note && (
+                <Panel><p className="py-6 text-center text-[13px] ui-t-faint">{note}</p></Panel>
+            )}
+
+            {!loading && leads.length > 0 && (
+                <>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-[13px] ui-t-soft">
+                            <input type="checkbox" checked={onlyNoSite} onChange={(e) => setOnlyNoSite(e.target.checked)}
+                                   className="rounded ui-b-strong ui-subtle" />
+                            Esconder quem já tem site próprio
+                        </label>
+                        <span className="text-[12px] ui-t-faint">{shown.length} lead{shown.length !== 1 ? 's' : ''}</span>
+                        <Button variant="ghost" onClick={exportCsv}><Download className="h-4 w-4" /> CSV</Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                        {shown.map((l, i) => {
+                            const b = SITE_BADGE[l.tem_site];
+                            return (
+                                <Panel key={i} className="flex flex-col gap-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-[14px] font-semibold ui-t">{l.nome}</p>
+                                            {l.resumo && <p className="mt-0.5 text-[12px] ui-t-faint">{l.resumo}</p>}
+                                        </div>
+                                        <Badge tone={b.tone}>{b.label}</Badge>
+                                    </div>
+
+                                    <div className="space-y-1 text-[12px] ui-t-soft">
+                                        {l.endereco && <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 ui-t-faint" />{l.endereco}</p>}
+                                        {(l.telefone || l.whatsapp) && <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 ui-t-faint" />{l.telefone || l.whatsapp}</p>}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(l.whatsapp || l.telefone) && (
+                                            <a href={waLink(l.whatsapp || l.telefone)} target="_blank" rel="noopener noreferrer"
+                                               className="ui-badge hover:ui-subtle">WhatsApp</a>
+                                        )}
+                                        {l.instagram && (
+                                            <a href={l.instagram} target="_blank" rel="noopener noreferrer" className="ui-badge hover:ui-subtle">
+                                                <AtSign className="h-3 w-3" /> Instagram
+                                            </a>
+                                        )}
+                                        {!l.instagram && (
+                                            <a href={`https://www.google.com/search?q=${encodeURIComponent(l.nome + ' ' + city + ' instagram')}`}
+                                               target="_blank" rel="noopener noreferrer" className="ui-badge hover:ui-subtle">
+                                                <Search className="h-3 w-3" /> achar Instagram
+                                            </a>
+                                        )}
+                                        {l.site && (
+                                            <a href={l.site.startsWith('http') ? l.site : `https://${l.site}`} target="_blank" rel="noopener noreferrer"
+                                               className="ui-badge hover:ui-subtle"><Globe className="h-3 w-3" /> site</a>
+                                        )}
+                                        <a href={`https://www.google.com/maps/search/${encodeURIComponent(l.nome + ' ' + city)}`}
+                                           target="_blank" rel="noopener noreferrer" className="ui-badge hover:ui-subtle">
+                                            <ExternalLink className="h-3 w-3" /> Maps
+                                        </a>
+                                    </div>
+
+                                    <div className="mt-auto pt-1">
+                                        {saved.has(l.nome) ? (
+                                            <span className="text-[12px] ui-pos">✓ no CRM</span>
+                                        ) : (
+                                            <button onClick={() => saveClient(l)}
+                                                    className="flex items-center gap-1.5 text-[12px] ui-t-soft hover:ui-t">
+                                                <UserPlus className="h-3.5 w-3.5" /> Salvar como cliente
+                                            </button>
+                                        )}
+                                    </div>
+                                </Panel>
+                            );
+                        })}
+                    </div>
+
+                    {sources.length > 0 && (
+                        <Panel>
+                            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide ui-t-faint">Fontes consultadas</p>
+                            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                                {sources.slice(0, 12).map((s, i) => (
+                                    <li key={i}>
+                                        <a href={s.uri} target="_blank" rel="noopener noreferrer" className="ui-t-soft hover:ui-t">
+                                            {s.title || s.uri}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
+                    )}
+                </>
+            )}
+        </AdminLayout>
+    );
+}

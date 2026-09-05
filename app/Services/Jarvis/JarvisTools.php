@@ -153,6 +153,19 @@ class JarvisTools
                         'required' => ['cliente', 'texto'],
                     ],
                 ],
+                [
+                    'name' => 'prospectar_leads',
+                    'description' => 'Busca no Google empresas de um nicho numa cidade, priorizando as que não têm site próprio (bons alvos para vender landing page). Retorna nome, telefone, endereço, instagram e situação do site.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'cidade' => ['type' => 'string'],
+                            'nicho' => ['type' => 'string', 'description' => 'ex: padaria, barbearia, clínica odontológica'],
+                            'quantidade' => ['type' => 'integer', 'description' => 'Padrão 12, máx 20'],
+                        ],
+                        'required' => ['cidade', 'nicho'],
+                    ],
+                ],
             ],
         ]];
     }
@@ -173,6 +186,7 @@ class JarvisTools
             'criar_lancamento' => self::criarLancamento($args),
             'mudar_status_cliente' => self::mudarStatusCliente($args),
             'anotar_cliente' => self::anotarCliente($args),
+            'prospectar_leads' => self::prospectarLeads($args),
             default => ['erro' => "Ferramenta desconhecida: {$name}"],
         };
     }
@@ -378,5 +392,26 @@ class JarvisTools
         Log::info('[Jarvis] anotar_cliente', ['user' => auth()->id(), 'client' => $cliente->id, 'note' => $note->id]);
 
         return ['ok' => true, 'cliente' => $cliente->name];
+    }
+
+    private static function prospectarLeads(array $args): array
+    {
+        try {
+            $result = app(\App\Services\Prospector\ProspectorService::class)->search(
+                (string) ($args['cidade'] ?? ''),
+                (string) ($args['nicho'] ?? ''),
+                (int) ($args['quantidade'] ?? 12),
+            );
+
+            Log::info('[Jarvis] prospectar_leads', ['user' => auth()->id(), 'args' => $args, 'n' => count($result['leads'])]);
+
+            return [
+                'total' => count($result['leads']),
+                'leads' => $result['leads'],
+                'obs' => $result['note'] ?? 'Confirme telefone/Instagram antes de contatar. Veja a lista completa em /admin/prospeccao.',
+            ];
+        } catch (\Throwable $e) {
+            return ['erro' => $e->getMessage()];
+        }
     }
 }

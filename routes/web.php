@@ -108,6 +108,12 @@ Route::prefix('admin')->group(function () {
         // Generic media upload (used by all admin image fields)
         Route::post('/upload', [MediaUploadController::class, 'store'])->name('admin.upload');
 
+        // Prospecção de leads (Gemini + Google Search)
+        Route::get('/prospeccao', [\App\Http\Controllers\Admin\ProspectorController::class, 'index'])->name('admin.prospector.index');
+        Route::post('/prospeccao/buscar', [\App\Http\Controllers\Admin\ProspectorController::class, 'search'])
+            ->middleware('throttle:20,1')->name('admin.prospector.search');
+        Route::post('/prospeccao/salvar', [\App\Http\Controllers\Admin\ProspectorController::class, 'saveClient'])->name('admin.prospector.save');
+
         // Usuários do painel (admin cria os operadores de finanças)
         Route::get('/usuarios', [\App\Http\Controllers\Admin\UserAdminController::class, 'index'])->name('admin.users.index');
         Route::post('/usuarios', [\App\Http\Controllers\Admin\UserAdminController::class, 'store'])->name('admin.users.store');

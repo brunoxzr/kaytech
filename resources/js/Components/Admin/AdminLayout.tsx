@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard, FolderGit2, Building2, MessageSquare, Settings, LogOut,
     Package, Link2, Scissors, Milestone, Wallet, ArrowLeftRight, Repeat,
-    PiggyBank, Tags, Menu, X, Moon, Sun, PanelLeftClose, PanelLeft, Users,
+    PiggyBank, Tags, Menu, X, Moon, Sun, PanelLeftClose, PanelLeft, Users, Radar,
 } from 'lucide-react';
 import { AdminThemeProvider, useAdminTheme } from '../../Contexts/AdminThemeContext';
 import { ChatWidget } from '../Chat/ChatWidget';
@@ -28,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
 
     { href: '/admin/clientes', label: 'Clientes', icon: Users, section: 'CRM' },
+    { href: '/admin/prospeccao', label: 'Prospecção', icon: Radar, section: 'CRM' },
 
     { href: '/admin/financas', label: 'Visão geral', icon: Wallet, section: 'Finanças', exact: true, financeAllowed: true },
     { href: '/admin/financas/lancamentos', label: 'Lançamentos', icon: ArrowLeftRight, section: 'Finanças', financeAllowed: true },
