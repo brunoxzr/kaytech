@@ -22,14 +22,26 @@ class WhatsAppController extends Controller
     {
         $chats = WaChat::query()
             ->when(! $request->boolean('archived'), fn ($q) => $q->where('archived', false))
+            ->with('client:id,status')
             ->orderByDesc('last_message_at')
-            ->limit(200)
-            ->get(['id', 'name', 'phone', 'is_group', 'profile_pic_url', 'last_message', 'last_message_at', 'unread', 'client_id']);
+            ->limit(300)
+            ->get(['id', 'name', 'phone', 'is_group', 'profile_pic_url', 'last_message', 'last_message_at', 'unread', 'client_id'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'phone' => $c->phone,
+                'is_group' => $c->is_group,
+                'profile_pic_url' => $c->profile_pic_url,
+                'last_message' => $c->last_message,
+                'last_message_at' => $c->last_message_at,
+                'unread' => $c->unread,
+                'client_id' => $c->client_id,
+                'is_lead' => in_array($c->client?->status, ['lead', 'prospect'], true),
+            ]);
 
         return Inertia::render('Admin/WhatsApp/Inbox', [
             'chats' => $chats,
             'connection' => $this->safeState(),
-            'overview' => $this->overview(),
         ]);
     }
 
@@ -39,21 +51,62 @@ class WhatsAppController extends Controller
         $chat->update(['unread' => 0]);
 
         return response()->json([
-            'chat' => $chat->only(['id', 'name', 'phone', 'is_group', 'client_id']),
+            'chat' => $chat->only(['id', 'name', 'phone', 'is_group', 'client_id', 'profile_pic_url']),
             'messages' => $chat->messages()->orderBy('sent_at')->limit(300)
-                ->get(['id', 'from_me', 'type', 'body', 'media_url', 'status', 'sent_at']),
+                ->get(['id', 'wamid', 'from_me', 'type', 'body', 'media_url', 'mimetype', 'reply_to_wamid', 'reply_to_preview', 'status', 'sent_at']),
         ]);
     }
 
-    /** Envia mensagem numa conversa existente. */
+    /** Sincroniza (ou re-sincroniza) todo o histórico de chats/mensagens da Evolution. */
+    public function import()
+    {
+        $result = $this->evo->importAll();
+
+        return back()->with('success', "Importado: {$result['chats']} conversas, {$result['messages']} mensagens.");
+    }
+
+    /** Serve mídia (imagem/áudio/vídeo/documento) decriptando via Evolution. Cacheado em disco local. */
+    public function media(\App\Models\WaMessage $message)
+    {
+        abort_unless($message->wamid && in_array($message->type, ['image', 'video', 'audio', 'document', 'sticker'], true), 404);
+
+        $cachePath = "wa-media/{$message->wamid}";
+        if (! \Illuminate\Support\Facades\Storage::disk('local')->exists($cachePath)) {
+            $media = $this->evo->getMediaBase64($message->wamid);
+            abort_if(! $media, 404);
+            \Illuminate\Support\Facades\Storage::disk('local')->put($cachePath, base64_decode($media['base64']));
+            if ($media['mimetype'] && $media['mimetype'] !== $message->mimetype) {
+                $message->update(['mimetype' => $media['mimetype']]);
+            }
+        }
+
+        return response(
+            \Illuminate\Support\Facades\Storage::disk('local')->get($cachePath),
+            200,
+            ['Content-Type' => $message->mimetype ?: 'application/octet-stream', 'Cache-Control' => 'private, max-age=604800']
+        );
+    }
+
+    /** Envia mensagem numa conversa existente, opcionalmente respondendo outra. */
     public function send(Request $request, WaChat $chat)
     {
-        $data = $request->validate(['text' => 'required|string|max:4096']);
+        $data = $request->validate([
+            'text' => 'required|string|max:4096',
+            'reply_to_id' => 'nullable|integer',
+        ]);
 
-        $wamid = $this->evo->sendText($chat->phone ?: explode('@', $chat->remote_jid)[0], $data['text']);
+        $replyTo = isset($data['reply_to_id']) ? $chat->messages()->find($data['reply_to_id']) : null;
+
+        $wamid = $this->evo->sendText(
+            $chat->phone ?: explode('@', $chat->remote_jid)[0],
+            $data['text'],
+            $replyTo?->wamid
+        );
 
         $chat->messages()->create([
             'wamid' => $wamid,
+            'reply_to_wamid' => $replyTo?->wamid,
+            'reply_to_preview' => $replyTo ? ($replyTo->body ?: "[{$replyTo->type}]") : null,
             'from_me' => true,
             'type' => 'text',
             'body' => $data['text'],
@@ -156,17 +209,4 @@ class WhatsAppController extends Controller
         }
     }
 
-    private function overview(): array
-    {
-        $today = now()->startOfDay();
-
-        return [
-            'chats' => (int) WaChat::count(),
-            'unread' => (int) WaChat::sum('unread'),
-            'waiting' => (int) WaChat::where('unread', '>', 0)->count(),
-            'sent_today' => (int) \App\Models\WaMessage::where('from_me', true)->where('sent_at', '>=', $today)->count(),
-            'received_today' => (int) \App\Models\WaMessage::where('from_me', false)->where('sent_at', '>=', $today)->count(),
-            'linked_clients' => (int) WaChat::whereNotNull('client_id')->count(),
-        ];
-    }
 }

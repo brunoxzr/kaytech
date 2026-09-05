@@ -120,6 +120,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/whatsapp/conectar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'connect'])->name('admin.wa.connect');
         Route::get('/whatsapp/conversas/{chat}', [\App\Http\Controllers\Admin\WhatsAppController::class, 'thread'])->name('admin.wa.thread');
         Route::post('/whatsapp/conversas/{chat}/enviar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'send'])->name('admin.wa.send');
+        Route::post('/whatsapp/importar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'import'])->name('admin.wa.import');
+        Route::get('/whatsapp/midia/{message}', [\App\Http\Controllers\Admin\WhatsAppController::class, 'media'])->name('admin.wa.media');
         Route::get('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcast'])->name('admin.wa.broadcast');
         Route::post('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcastSend'])->name('admin.wa.broadcast.send');
 

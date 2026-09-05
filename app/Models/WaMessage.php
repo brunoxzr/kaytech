@@ -10,7 +10,7 @@ class WaMessage extends Model
     protected $table = 'wa_messages';
 
     protected $fillable = [
-        'wa_chat_id', 'wamid', 'from_me', 'type', 'body', 'media_url', 'status', 'sent_at',
+        'wa_chat_id', 'wamid', 'reply_to_wamid', 'reply_to_preview', 'from_me', 'type', 'body', 'media_url', 'mimetype', 'status', 'sent_at',
     ];
 
     protected $casts = [
