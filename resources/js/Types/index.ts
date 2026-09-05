@@ -100,6 +100,8 @@ export type LinkPageSetting = {
     group: LinkGroup;
     background_color?: string | null;
     background_image?: string | null;
+    background_blur?: number | null;
+    background_dim?: number | null;
     profile_image?: string | null;
     display_name?: string | null;
     role_tagline?: string | null;

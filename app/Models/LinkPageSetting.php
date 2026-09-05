@@ -13,6 +13,8 @@ class LinkPageSetting extends Model
         'group',
         'background_color',
         'background_image',
+        'background_blur',
+        'background_dim',
         'profile_image',
         'display_name',
         'role_tagline',

@@ -17,6 +17,8 @@ class LinkPageSettingAdminController extends Controller
         $data = $request->validate([
             'background_color' => 'nullable|string|max:20',
             'background_image' => 'nullable|string|max:255',
+            'background_blur' => 'nullable|integer|min:0|max:60',
+            'background_dim' => 'nullable|integer|min:0|max:100',
             'profile_image' => 'nullable|string|max:255',
             'display_name' => 'nullable|string|max:255',
             'role_tagline' => 'nullable|string|max:255',
