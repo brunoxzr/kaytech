@@ -45,7 +45,13 @@ class ProspectorController extends Controller
         } catch (\Throwable $e) {
             Log::error('[Prospector] ' . $e->getMessage());
 
-            return response()->json(['leads' => [], 'sources' => [], 'note' => 'Erro na busca: ' . $e->getMessage()], 200);
+            $msg = str_contains($e->getMessage(), '429') || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED')
+                ? 'Cota da IA atingida por agora. Tente novamente daqui a pouco.'
+                : (str_contains($e->getMessage(), '503') || str_contains($e->getMessage(), 'UNAVAILABLE')
+                    ? 'A IA está sobrecarregada. Tente de novo em alguns segundos.'
+                    : 'Não foi possível concluir a busca agora.');
+
+            return response()->json(['leads' => [], 'sources' => [], 'note' => $msg], 200);
         }
     }
 
