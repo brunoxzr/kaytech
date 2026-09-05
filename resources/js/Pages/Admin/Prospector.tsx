@@ -12,7 +12,7 @@ interface Lead {
     maps_url: string; resumo: string;
 }
 interface Source { title: string | null; uri: string }
-interface Props { niches: string[] }
+interface Props { niches: string[]; existingNames: string[] }
 
 const csrf = () => document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 const onlyDigits = (s: string) => s.replace(/\D/g, '');
@@ -24,7 +24,8 @@ const SITE_BADGE: Record<Lead['tem_site'], { label: string; tone: 'pos' | 'neg' 
     sim: { label: 'tem site', tone: 'neg' },
 };
 
-export default function Prospector({ niches }: Props) {
+export default function Prospector({ niches, existingNames }: Props) {
+    const known = React.useMemo(() => new Set(existingNames), [existingNames]);
     const [city, setCity] = React.useState('');
     const [niche, setNiche] = React.useState(niches[0] ?? '');
     const [limit, setLimit] = React.useState(15);
@@ -200,12 +201,12 @@ export default function Prospector({ niches }: Props) {
                                     </div>
 
                                     <div className="mt-auto pt-1">
-                                        {saved.has(l.nome) ? (
-                                            <span className="text-[12px] ui-pos">✓ no CRM</span>
+                                        {saved.has(l.nome) || known.has(l.nome.toLowerCase()) ? (
+                                            <span className="text-[12px] ui-pos">✓ já no pipeline</span>
                                         ) : (
                                             <button onClick={() => saveClient(l)}
                                                     className="flex items-center gap-1.5 text-[12px] ui-t-soft hover:ui-t">
-                                                <UserPlus className="h-3.5 w-3.5" /> Salvar como cliente
+                                                <UserPlus className="h-3.5 w-3.5" /> Adicionar ao pipeline
                                             </button>
                                         )}
                                     </div>

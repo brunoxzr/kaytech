@@ -16,6 +16,7 @@ class ProspectorController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Prospector', [
+            'existingNames' => Client::pluck('name')->map(fn ($n) => mb_strtolower($n))->values(),
             'niches' => [
                 'Restaurante', 'Pizzaria', 'Padaria / confeitaria', 'Hamburgueria', 'Cafeteria',
                 'Barbearia', 'Salão de beleza', 'Estética', 'Academia', 'Estúdio de pilates',
@@ -57,39 +58,39 @@ class ProspectorController extends Controller
     /** Salva um resultado da prospecção como cliente no CRM. */
     public function saveClient(Request $request)
     {
-        $data = $request->validate([
-            'nome' => 'required|string|max:160',
-            'telefone' => 'nullable|string|max:40',
-            'whatsapp' => 'nullable|string|max:40',
-            'endereco' => 'nullable|string|max:255',
-            'instagram' => 'nullable|string|max:255',
-            'site' => 'nullable|string|max:255',
-            'tem_site' => 'nullable|string|max:20',
-            'resumo' => 'nullable|string|max:1000',
-            'niche' => 'nullable|string|max:120',
-            'city' => 'nullable|string|max:120',
-        ]);
+        $d = $request->all();
+        $nome = trim((string) ($d['nome'] ?? ''));
+        if ($nome === '') {
+            return back()->with('error', 'Lead sem nome.');
+        }
+
+        // não duplica: mesmo nome já no pipeline
+        if (Client::where('name', $nome)->exists()) {
+            return back()->with('error', "“{$nome}” já está no pipeline.");
+        }
 
         Client::create([
-            'name' => $data['nome'],
-            'company' => $data['nome'],
-            'phone' => $data['whatsapp'] ?: $data['telefone'] ?: null,
-            'status' => 'prospect',
-            'source' => 'Prospecção',
-            'tags' => array_values(array_filter([$data['niche'] ?? null, $data['city'] ?? null])),
+            'name' => $nome,
+            'company' => $nome,
+            'phone' => ($d['whatsapp'] ?? '') ?: ($d['telefone'] ?? '') ?: null,
+            'status' => 'lead',
+            'source' => 'Prospecção Google Maps',
+            'tags' => array_values(array_filter(['Prospecção', $d['niche'] ?? null, $d['city'] ?? null])),
             'deal_value' => 0,
-            'order' => Client::where('status', 'prospect')->max('order') + 1,
+            'order' => Client::where('status', 'lead')->max('order') + 1,
         ])->notes()->create([
             'kind' => 'note',
             'body' => trim(implode("\n", array_filter([
-                $data['resumo'] ?? null,
-                $data['endereco'] ? 'Endereço: ' . $data['endereco'] : null,
-                $data['telefone'] ? 'Telefone: ' . $data['telefone'] : null,
-                $data['instagram'] ? 'Instagram: ' . $data['instagram'] : null,
-                $data['site'] ? 'Site: ' . $data['site'] : 'Sem site próprio.',
+                $d['resumo'] ?? null,
+                ! empty($d['endereco']) ? 'Endereço: ' . $d['endereco'] : null,
+                ! empty($d['telefone']) ? 'Telefone: ' . $d['telefone'] : null,
+                ! empty($d['instagram']) ? 'Instagram: ' . $d['instagram'] : null,
+                isset($d['avaliacoes']) ? "Google: {$d['avaliacoes']} avaliações" . (isset($d['nota']) ? " · nota {$d['nota']}" : '') : null,
+                ! empty($d['site']) ? 'Site: ' . $d['site'] : 'Sem site próprio — bom alvo para landing page.',
+                ! empty($d['maps_url']) ? 'Maps: ' . $d['maps_url'] : null,
             ]))),
         ]);
 
-        return back()->with('success', "“{$data['nome']}” adicionado ao CRM como prospect.");
+        return back()->with('success', "“{$nome}” adicionado ao CRM como prospect.");
     }
 }

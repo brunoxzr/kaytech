@@ -6,17 +6,25 @@ import {
 import { AdminLayout } from '../../Components/Admin/AdminLayout';
 import { Panel, PanelTitle, Button, Field, Input, Select, Textarea, Modal, Badge, EmptyState } from '../../Components/Admin/ui';
 
-type Status = 'prospect' | 'contacted' | 'proposal' | 'won' | 'lost';
+type Status = 'lead' | 'prospect' | 'contacted' | 'proposal' | 'won' | 'lost';
 
 const STATUS_LABEL: Record<Status, string> = {
-    prospect: 'Prospect', contacted: 'Contatado', proposal: 'Proposta', won: 'Fechado', lost: 'Perdido',
+    lead: 'Lead', prospect: 'Prospect', contacted: 'Contatado', proposal: 'Proposta', won: 'Fechado', lost: 'Perdido',
 };
-const STATUS_ORDER: Status[] = ['prospect', 'contacted', 'proposal', 'won', 'lost'];
+const STATUS_ORDER: Status[] = ['lead', 'prospect', 'contacted', 'proposal', 'won', 'lost'];
+
+const BANT: { key: string; label: string }[] = [
+    { key: 'need', label: 'Tem necessidade real' },
+    { key: 'authority', label: 'Falei com quem decide' },
+    { key: 'budget', label: 'Tem orçamento' },
+    { key: 'timing', label: 'Tem prazo / urgência' },
+];
 
 interface Note { id: number; body: string; kind: string; created_at: string; }
 interface Client {
     id: number; name: string; company: string | null; email: string | null; phone: string | null;
     status: Status; deal_value: number; source: string | null; tags: string[] | null;
+    qualification: Record<string, boolean> | null;
     next_action: string | null; next_action_at: string | null;
     project_id: number | null; lead_id: number | null; project_title: string | null;
     order: number; notes: Note[];
@@ -31,7 +39,7 @@ const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 const emptyForm = {
-    name: '', company: '', email: '', phone: '', status: 'prospect' as Status, deal_value: '',
+    name: '', company: '', email: '', phone: '', status: 'lead' as Status, deal_value: '',
     source: '', tags: '' as string, next_action: '', next_action_at: '',
     project_id: '' as string | number, lead_id: '' as string | number, first_note: '',
 };
@@ -69,6 +77,7 @@ export default function Clients({ clients, projects, leads }: Props) {
         const payload = {
             ...form.data,
             tags: form.data.tags ? form.data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+            qualification: editing?.qualification ?? {},
         };
         const opts = { onSuccess: () => { setFormOpen(false); form.reset(); setEditing(null); } };
         editing
@@ -125,11 +134,21 @@ export default function Clients({ clients, projects, leads }: Props) {
                     <NextActionTag c={c} />
                 </div>
             )}
-            {c.notes.length > 0 && (
-                <p className="mt-2 flex items-center gap-1 text-[11px] ui-t-faint">
-                    <StickyNote className="h-3 w-3" /> {c.notes.length} anotaç{c.notes.length === 1 ? 'ão' : 'ões'}
-                </p>
-            )}
+            <div className="mt-2 flex items-center gap-2 text-[11px] ui-t-faint">
+                {['lead', 'prospect', 'contacted'].includes(c.status) && (
+                    <span className="flex items-center gap-0.5" title="Qualificação (BANT)">
+                        {BANT.map((b) => (
+                            <span key={b.key}
+                                  className={`h-1.5 w-1.5 rounded-full ${(c.qualification ?? {})[b.key] ? 'bg-[var(--ui-pos)]' : 'ui-subtle'}`} />
+                        ))}
+                    </span>
+                )}
+                {c.notes.length > 0 && (
+                    <span className="flex items-center gap-1">
+                        <StickyNote className="h-3 w-3" /> {c.notes.length}
+                    </span>
+                )}
+            </div>
         </button>
     );
 
@@ -158,7 +177,7 @@ export default function Clients({ clients, projects, leads }: Props) {
 
             {/* KANBAN */}
             {clients.length > 0 && view === 'kanban' && (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-5">
+                <div className="flex gap-3 overflow-x-auto pb-2 [&>*]:min-w-[240px] [&>*]:flex-1">
                     {grouped.map(({ status, items }) => (
                         <div
                             key={status}
@@ -311,6 +330,48 @@ export default function Clients({ clients, projects, leads }: Props) {
                                 {detail.tags.map((t) => <span key={t} className="ui-badge">{t}</span>)}
                             </div>
                         ) : null}
+
+                        {/* Checklist de qualificação (BANT) */}
+                        <div className="rounded-lg border ui-b p-3">
+                            {(() => {
+                                const q = detail.qualification ?? {};
+                                const done = BANT.filter((b) => q[b.key]).length;
+                                return (
+                                    <>
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-[12px] font-semibold ui-t">Qualificação</span>
+                                            <span className="text-[11px] ui-t-faint">{done}/{BANT.length}</span>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            {BANT.map((b) => (
+                                                <label key={b.key} className="flex items-center gap-2 text-[13px] ui-t-soft">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!q[b.key]}
+                                                        onChange={(e) => {
+                                                            const next = { ...q, [b.key]: e.target.checked };
+                                                            router.put(`/admin/clientes/${detail.id}`, {
+                                                                name: detail.name, company: detail.company, email: detail.email,
+                                                                phone: detail.phone, status: detail.status,
+                                                                deal_value: String(detail.deal_value), source: detail.source,
+                                                                tags: detail.tags ?? [], qualification: next,
+                                                                next_action: detail.next_action, next_action_at: detail.next_action_at,
+                                                                project_id: detail.project_id, lead_id: detail.lead_id,
+                                                            }, { preserveScroll: true });
+                                                        }}
+                                                        className="rounded ui-b-strong ui-subtle"
+                                                    />
+                                                    {b.label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {done === BANT.length && detail.status === 'lead' && (
+                                            <p className="mt-2 text-[11px] ui-pos">✓ Qualificado — mova para “Prospect”.</p>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
 
                         <div className="flex gap-2">
                             <Button variant="ghost" onClick={() => openEdit(detail)}>Editar</Button>

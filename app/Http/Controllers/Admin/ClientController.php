@@ -118,6 +118,8 @@ class ClientController extends Controller
             'source' => 'nullable|string|max:60',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:40',
+            'qualification' => 'nullable|array',
+            'qualification.*' => 'boolean',
             'next_action' => 'nullable|string|max:200',
             'next_action_at' => 'nullable|date',
             'project_id' => 'nullable|exists:projects,id',
@@ -125,6 +127,9 @@ class ClientController extends Controller
         ]);
 
         $data['deal_value'] = (int) round(($data['deal_value'] ?? 0) * 100);
+        // só mantém as chaves BANT válidas
+        $data['qualification'] = collect($data['qualification'] ?? [])
+            ->only(array_keys(Client::QUALIFICATION))->map(fn ($v) => (bool) $v)->all();
 
         return $data;
     }
@@ -136,9 +141,9 @@ class ClientController extends Controller
             ->groupBy('status')->get()->keyBy('status');
 
         $upcoming = Client::whereNotNull('next_action_at')
-            ->whereIn('status', ['prospect', 'contacted', 'proposal'])
+            ->whereIn('status', ['lead', 'prospect', 'contacted', 'proposal'])
             ->orderBy('next_action_at')
-            ->take(6)
+            ->take(8)
             ->get(['id', 'name', 'company', 'next_action', 'next_action_at'])
             ->map(fn ($c) => [
                 'id' => $c->id,
@@ -150,16 +155,49 @@ class ClientController extends Controller
                 'today' => $c->next_action_at && $c->next_action_at->isToday(),
             ]);
 
+        $count = fn ($s) => (int) ($byStatus[$s]->c ?? 0);
+        $val = fn ($s) => (int) ($byStatus[$s]->v ?? 0);
+
+        $won = $count('won');
+        $lost = $count('lost');
+        $closed = $won + $lost;
+        $activeLeads = $count('lead');
+
+        // leads em "lead" ainda não qualificados (nenhum item BANT marcado)
+        $unqualified = Client::where('status', 'lead')->get('qualification')
+            ->filter(fn ($c) => empty(array_filter((array) $c->qualification)))
+            ->count();
+
+        // últimos leads adicionados por prospecção
+        $recentProspects = Client::where('source', 'like', 'Prospecção%')
+            ->latest()->take(6)
+            ->get(['id', 'name', 'phone', 'tags', 'status', 'created_at'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'phone' => $c->phone,
+                'tags' => $c->tags,
+                'status' => $c->status,
+                'when' => $c->created_at?->diffForHumans(),
+            ]);
+
         return [
             'total' => (int) Client::count(),
             'pipeline' => collect(Client::STATUSES)->map(fn ($s) => [
                 'status' => $s,
-                'count' => (int) ($byStatus[$s]->c ?? 0),
-                'value' => (int) ($byStatus[$s]->v ?? 0),
+                'count' => $count($s),
+                'value' => $val($s),
             ]),
-            'won_value' => (int) ($byStatus['won']->v ?? 0),
-            'open_value' => (int) collect(['prospect', 'contacted', 'proposal'])
-                ->sum(fn ($s) => $byStatus[$s]->v ?? 0),
+            'won_value' => $val('won'),
+            'open_value' => (int) collect(['lead', 'prospect', 'contacted', 'proposal'])->sum($val),
+            'active_leads' => $activeLeads,
+            'unqualified' => $unqualified,
+            'won_count' => $won,
+            'conversion' => $closed > 0 ? round($won / $closed * 100) : 0,
+            'overdue_count' => Client::whereNotNull('next_action_at')
+                ->whereIn('status', ['lead', 'prospect', 'contacted', 'proposal'])
+                ->whereDate('next_action_at', '<', now()->toDateString())->count(),
+            'recent_prospects' => $recentProspects,
             'upcoming' => $upcoming,
         ];
     }
