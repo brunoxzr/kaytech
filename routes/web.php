@@ -110,8 +110,7 @@ Route::prefix('admin')->group(function () {
 
         // Prospecção de leads (Gemini + Google Search)
         Route::get('/prospeccao', [\App\Http\Controllers\Admin\ProspectorController::class, 'index'])->name('admin.prospector.index');
-        Route::post('/prospeccao/buscar', [\App\Http\Controllers\Admin\ProspectorController::class, 'search'])
-            ->middleware('throttle:20,1')->name('admin.prospector.search');
+        Route::post('/prospeccao/buscar', [\App\Http\Controllers\Admin\ProspectorController::class, 'search'])->name('admin.prospector.search');
         Route::post('/prospeccao/salvar', [\App\Http\Controllers\Admin\ProspectorController::class, 'saveClient'])->name('admin.prospector.save');
 
         // Usuários do painel (admin cria os operadores de finanças)

@@ -28,18 +28,16 @@ class ProspectorController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'city' => 'required|string|max:120',
-            'niche' => 'required|string|max:120',
-            'limit' => 'nullable|integer|min:3|max:25',
-        ]);
-
         try {
-            $result = app(ProspectorService::class)->search(
-                $data['city'],
-                $data['niche'],
-                $data['limit'] ?? 15,
-            );
+            $city = trim((string) $request->input('city', ''));
+            $niche = trim((string) $request->input('niche', ''));
+            $limit = (int) $request->input('limit', 15);
+
+            if ($city === '' || $niche === '') {
+                return response()->json(['leads' => [], 'sources' => [], 'note' => 'Informe cidade e nicho.'], 200);
+            }
+
+            $result = app(ProspectorService::class)->search($city, $niche, $limit);
 
             return response()->json($result);
         } catch (\Throwable $e) {
