@@ -120,6 +120,8 @@ class ClientController extends Controller
             'tags.*' => 'string|max:40',
             'qualification' => 'nullable|array',
             'qualification.*' => 'boolean',
+            'replied' => 'nullable|boolean',
+            'temperature' => 'nullable|in:cold,warm,hot',
             'next_action' => 'nullable|string|max:200',
             'next_action_at' => 'nullable|date',
             'project_id' => 'nullable|exists:projects,id',
@@ -127,6 +129,8 @@ class ClientController extends Controller
         ]);
 
         $data['deal_value'] = (int) round(($data['deal_value'] ?? 0) * 100);
+        $data['replied'] = (bool) ($data['replied'] ?? false);
+        $data['temperature'] = $data['temperature'] ?? 'cold';
         // só mantém as chaves BANT válidas
         $data['qualification'] = collect($data['qualification'] ?? [])
             ->only(array_keys(Client::QUALIFICATION))->map(fn ($v) => (bool) $v)->all();

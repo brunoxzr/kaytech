@@ -12,6 +12,10 @@ const STATUS_LABEL: Record<Status, string> = {
     lead: 'Lead', prospect: 'Prospect', contacted: 'Contatado', proposal: 'Proposta', won: 'Fechado', lost: 'Perdido',
 };
 const STATUS_ORDER: Status[] = ['lead', 'prospect', 'contacted', 'proposal', 'won', 'lost'];
+const STATUS_COLOR: Record<Status, string> = {
+    lead: '#94A3B8', prospect: '#3B82F6', contacted: '#F59E0B',
+    proposal: '#8B5CF6', won: '#22C55E', lost: '#EF4444',
+};
 
 const BANT: { key: string; label: string }[] = [
     { key: 'need', label: 'Tem necessidade real' },
@@ -21,10 +25,15 @@ const BANT: { key: string; label: string }[] = [
 ];
 
 interface Note { id: number; body: string; kind: string; created_at: string; }
+type Temp = 'cold' | 'warm' | 'hot';
+const TEMP_LABEL: Record<Temp, string> = { cold: 'Frio', warm: 'Morno', hot: 'Quente' };
+const TEMP_COLOR: Record<Temp, string> = { cold: '#60A5FA', warm: '#F59E0B', hot: '#EF4444' };
+
 interface Client {
     id: number; name: string; company: string | null; email: string | null; phone: string | null;
     status: Status; deal_value: number; source: string | null; tags: string[] | null;
     qualification: Record<string, boolean> | null;
+    replied: boolean; temperature: Temp;
     next_action: string | null; next_action_at: string | null;
     project_id: number | null; lead_id: number | null; project_title: string | null;
     order: number; notes: Note[];
@@ -40,6 +49,7 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 const emptyForm = {
     name: '', company: '', email: '', phone: '', status: 'lead' as Status, deal_value: '',
+    temperature: 'cold' as Temp, replied: false,
     source: '', tags: '' as string, next_action: '', next_action_at: '',
     project_id: '' as string | number, lead_id: '' as string | number, first_note: '',
 };
@@ -65,6 +75,7 @@ export default function Clients({ clients, projects, leads }: Props) {
         form.setData({
             name: c.name, company: c.company ?? '', email: c.email ?? '', phone: c.phone ?? '',
             status: c.status, deal_value: c.deal_value ? String(c.deal_value) : '',
+            temperature: c.temperature ?? 'cold', replied: c.replied ?? false,
             source: c.source ?? '', tags: (c.tags ?? []).join(', '),
             next_action: c.next_action ?? '', next_action_at: c.next_action_at ?? '',
             project_id: c.project_id ?? '', lead_id: c.lead_id ?? '', first_note: '',
@@ -91,14 +102,33 @@ export default function Clients({ clients, projects, leads }: Props) {
         noteForm.post(`/admin/clientes/${detail.id}/notas`, { onSuccess: () => noteForm.reset(), preserveScroll: true });
     };
 
-    const drop = (status: Status) => {
-        if (dragId == null) return;
-        const target = clients.filter((c) => c.status === status);
-        router.patch(`/admin/clientes/${dragId}/mover`, { status, order: target.length }, { preserveScroll: true });
-        setDragId(null);
+    /** Atualiza campos soltos de um cliente sem abrir o form. */
+    const quickUpdate = (c: Client, patch: Partial<Client>) => {
+        router.put(`/admin/clientes/${c.id}`, {
+            name: c.name, company: c.company, email: c.email, phone: c.phone, status: c.status,
+            deal_value: String(c.deal_value), source: c.source, tags: c.tags ?? [],
+            qualification: c.qualification ?? {}, replied: c.replied, temperature: c.temperature,
+            next_action: c.next_action, next_action_at: c.next_action_at,
+            project_id: c.project_id, lead_id: c.lead_id,
+            ...patch,
+        }, { preserveScroll: true });
     };
 
-    const grouped = STATUS_ORDER.map((s) => ({ status: s, items: clients.filter((c) => c.status === s) }));
+    const [dragOver, setDragOver] = React.useState<{ status: Status; index: number } | null>(null);
+
+    const moveTo = (status: Status, index: number) => {
+        if (dragId == null) return;
+        router.patch(`/admin/clientes/${dragId}/mover`, { status, order: index }, { preserveScroll: true });
+        setDragId(null);
+        setDragOver(null);
+    };
+
+    const grouped = STATUS_ORDER.map((s) => ({
+        status: s,
+        items: clients.filter((c) => c.status === s).sort((a, b) => a.order - b.order),
+    }));
+
+    const dragging = clients.find((c) => c.id === dragId) ?? null;
 
     const NextActionTag = ({ c }: { c: Client }) => {
         if (!c.next_action_at) return null;
@@ -114,43 +144,73 @@ export default function Clients({ clients, projects, leads }: Props) {
         );
     };
 
-    const ClientCard = ({ c, draggable = false }: { c: Client; draggable?: boolean }) => (
-        <button
-            draggable={draggable}
-            onDragStart={() => setDragId(c.id)}
-            onClick={() => setDetail(c)}
-            className="ui-panel w-full p-3 text-left transition hover:ui-b-strong"
-        >
-            <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                    <p className="truncate text-[13px] font-medium ui-t">{c.name}</p>
-                    {c.company && <p className="truncate text-[12px] ui-t-faint">{c.company}</p>}
+    const ClientCard = ({ c }: { c: Client }) => {
+        const qDone = BANT.filter((b) => (c.qualification ?? {})[b.key]).length;
+        return (
+            <div
+                draggable
+                onDragStart={() => setDragId(c.id)}
+                onDragEnd={() => { setDragId(null); setDragOver(null); }}
+                onClick={() => setDetail(c)}
+                className={`group cursor-grab rounded-lg border ui-b bg-[var(--ui-surface)] p-2.5 text-left shadow-sm transition
+                    hover:border-[var(--ui-border-strong)] hover:shadow active:cursor-grabbing
+                    ${dragId === c.id ? 'opacity-40' : ''}`}
+            >
+                {/* topo: temperatura + status */}
+                <div className="mb-2 flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" title={TEMP_LABEL[c.temperature]} style={{ background: TEMP_COLOR[c.temperature] }} />
+                    <span className="block h-1 flex-1 max-w-8 rounded-full" style={{ background: STATUS_COLOR[c.status] }} />
+                    {c.replied && <span className="text-[10px] ui-pos" title="Respondeu">● resp.</span>}
                 </div>
-                {c.deal_value > 0 && <span className="shrink-0 text-[12px] font-medium ui-t-soft">{brl(c.deal_value)}</span>}
-            </div>
-            {(c.tags?.length || c.next_action_at) && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                    {c.tags?.slice(0, 3).map((t) => <span key={t} className="ui-badge">{t}</span>)}
-                    <NextActionTag c={c} />
+
+                <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] font-medium leading-snug ui-t">{c.name}</p>
+                    {c.deal_value > 0 && (
+                        <span className="shrink-0 rounded ui-subtle px-1.5 py-0.5 text-[11px] font-semibold ui-t-soft">{brl(c.deal_value)}</span>
+                    )}
                 </div>
-            )}
-            <div className="mt-2 flex items-center gap-2 text-[11px] ui-t-faint">
-                {['lead', 'prospect', 'contacted'].includes(c.status) && (
-                    <span className="flex items-center gap-0.5" title="Qualificação (BANT)">
-                        {BANT.map((b) => (
-                            <span key={b.key}
-                                  className={`h-1.5 w-1.5 rounded-full ${(c.qualification ?? {})[b.key] ? 'bg-[var(--ui-pos)]' : 'ui-subtle'}`} />
+                {(c.company || c.phone) && (
+                    <p className="mt-0.5 truncate text-[11px] ui-t-faint">{[c.company, c.phone].filter(Boolean).join(' · ')}</p>
+                )}
+
+                {c.tags?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                        {c.tags.slice(0, 3).map((t) => (
+                            <span key={t} className="rounded ui-subtle px-1.5 py-0.5 text-[10px] ui-t-faint">{t}</span>
                         ))}
-                    </span>
-                )}
-                {c.notes.length > 0 && (
-                    <span className="flex items-center gap-1">
-                        <StickyNote className="h-3 w-3" /> {c.notes.length}
-                    </span>
-                )}
+                    </div>
+                ) : null}
+
+                {c.next_action_at && <div className="mt-2"><NextActionTag c={c} /></div>}
+
+                <div className="mt-2 flex items-center gap-3 text-[11px] ui-t-faint">
+                    {['lead', 'prospect', 'contacted'].includes(c.status) && (
+                        <span className="flex items-center gap-0.5" title={`Qualificação ${qDone}/${BANT.length}`}>
+                            {BANT.map((b) => (
+                                <span key={b.key}
+                                      className={`h-1.5 w-1.5 rounded-full ${(c.qualification ?? {})[b.key] ? 'bg-[var(--ui-pos)]' : 'ui-subtle'}`} />
+                            ))}
+                        </span>
+                    )}
+                    {c.notes.length > 0 && (
+                        <span className="flex items-center gap-1"><StickyNote className="h-3 w-3" /> {c.notes.length}</span>
+                    )}
+                </div>
             </div>
-        </button>
-    );
+        );
+    };
+
+    /** Zona de drop entre dois cards. */
+    const DropSlot = ({ status, index }: { status: Status; index: number }) => {
+        const active = dragOver?.status === status && dragOver.index === index;
+        return (
+            <div
+                onDragOver={(e) => { e.preventDefault(); if (dragId != null) setDragOver({ status, index }); }}
+                onDrop={() => moveTo(status, index)}
+                className={`transition-all ${active ? 'h-9 rounded-lg border-2 border-dashed border-[var(--ui-border-strong)] bg-[var(--ui-subtle)]' : 'h-2'}`}
+            />
+        );
+    };
 
     return (
         <AdminLayout
@@ -175,30 +235,52 @@ export default function Clients({ clients, projects, leads }: Props) {
 
             {clients.length === 0 && <EmptyState>Nenhum cliente ainda. Clique em “Novo cliente” para começar.</EmptyState>}
 
-            {/* KANBAN */}
+            {/* KANBAN — estilo board */}
             {clients.length > 0 && view === 'kanban' && (
-                <div className="flex gap-3 overflow-x-auto pb-2 [&>*]:min-w-[240px] [&>*]:flex-1">
-                    {grouped.map(({ status, items }) => (
-                        <div
-                            key={status}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => drop(status)}
-                            className="ui-subtle rounded-xl p-2"
-                        >
-                            <div className="flex items-center justify-between px-1 pb-2 pt-1">
-                                <span className="text-[12px] font-semibold ui-t">{STATUS_LABEL[status]}</span>
-                                <span className="text-[11px] ui-t-faint">{items.length}</span>
+                <div className="-mx-2 flex gap-3 overflow-x-auto px-2 pb-3">
+                    {grouped.map(({ status, items }) => {
+                        const total = items.reduce((s, c) => s + c.deal_value, 0);
+                        return (
+                            <div key={status} className="flex w-[280px] shrink-0 flex-col rounded-xl bg-[var(--ui-subtle)]">
+                                {/* header da coluna */}
+                                <div className="flex items-center gap-2 px-3 pb-2 pt-3">
+                                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_COLOR[status] }} />
+                                    <span className="text-[12px] font-semibold ui-t">{STATUS_LABEL[status]}</span>
+                                    <span className="rounded-full ui-surface px-1.5 text-[11px] ui-t-faint">{items.length}</span>
+                                    {total > 0 && <span className="ml-auto text-[11px] ui-t-faint">{brl(total)}</span>}
+                                </div>
+
+                                {/* lista de cards com slots de drop entre eles */}
+                                <div
+                                    className="flex max-h-[calc(100vh-16rem)] flex-1 flex-col overflow-y-auto px-2 pb-2"
+                                    onDragOver={(e) => { e.preventDefault(); if (dragId != null && items.length === 0) setDragOver({ status, index: 0 }); }}
+                                    onDrop={() => { if (items.length === 0) moveTo(status, 0); }}
+                                >
+                                    {items.length === 0 ? (
+                                        <p className={`rounded-lg border-2 border-dashed py-8 text-center text-[11px] transition
+                                            ${dragOver?.status === status ? 'border-[var(--ui-border-strong)] bg-[var(--ui-surface)] ui-t-soft' : 'ui-b ui-t-faint'}`}>
+                                            {dragId != null ? 'Soltar aqui' : 'Vazio'}
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <DropSlot status={status} index={0} />
+                                            {items.map((c, i) => (
+                                                <React.Fragment key={c.id}>
+                                                    <ClientCard c={c} />
+                                                    <DropSlot status={status} index={i + 1} />
+                                                </React.Fragment>
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+
+                                <button onClick={() => { form.setData({ ...emptyForm, status }); setEditing(null); setFormOpen(true); }}
+                                        className="m-2 mt-0 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] ui-t-faint transition hover:ui-surface hover:ui-t">
+                                    <Plus className="h-3.5 w-3.5" /> Adicionar
+                                </button>
                             </div>
-                            <div className="space-y-2">
-                                {items.map((c) => <ClientCard key={c.id} c={c} draggable />)}
-                                {items.length === 0 && (
-                                    <p className="rounded-lg border border-dashed ui-b py-6 text-center text-[11px] ui-t-faint">
-                                        Arraste aqui
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
@@ -270,6 +352,21 @@ export default function Clients({ clients, projects, leads }: Props) {
                         <Field label="Valor do negócio (R$)"><Input type="number" step="0.01" min="0" value={form.data.deal_value} onChange={(e) => form.setData('deal_value', e.target.value)} /></Field>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
+                        <Field label="Chance de fechar">
+                            <Select value={form.data.temperature} onChange={(e) => form.setData('temperature', e.target.value as Temp)}>
+                                {(Object.keys(TEMP_LABEL) as Temp[]).map((t) => <option key={t} value={t}>{TEMP_LABEL[t]}</option>)}
+                            </Select>
+                        </Field>
+                        <Field label="Retorno">
+                            <label className="flex h-9 items-center gap-2 text-[13px] ui-t-soft">
+                                <input type="checkbox" checked={form.data.replied}
+                                       onChange={(e) => form.setData('replied', e.target.checked)}
+                                       className="rounded ui-b-strong ui-subtle" />
+                                Já respondeu / deu retorno
+                            </label>
+                        </Field>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                         <Field label="Origem">
                             <Select value={form.data.source} onChange={(e) => form.setData('source', e.target.value)}>
                                 <option value="">—</option>
@@ -318,10 +415,39 @@ export default function Clients({ clients, projects, leads }: Props) {
                             <NextActionTag c={detail} />
                         </div>
 
+                        {/* Chance de fechar + retorno */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex gap-1">
+                                {(Object.keys(TEMP_LABEL) as Temp[]).map((t) => (
+                                    <button key={t} onClick={() => quickUpdate(detail, { temperature: t })}
+                                            className={`rounded-md border px-2.5 py-1 text-[12px] transition ${
+                                                detail.temperature === t ? 'ui-t' : 'ui-t-faint hover:ui-t'}`}
+                                            style={{ borderColor: detail.temperature === t ? TEMP_COLOR[t] : 'var(--ui-border)' }}>
+                                        {TEMP_LABEL[t]}
+                                    </button>
+                                ))}
+                            </div>
+                            <label className="flex items-center gap-2 text-[13px] ui-t-soft">
+                                <input type="checkbox" checked={detail.replied}
+                                       onChange={(e) => quickUpdate(detail, { replied: e.target.checked })}
+                                       className="rounded ui-b-strong ui-subtle" />
+                                Já respondeu
+                            </label>
+                        </div>
+
                         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
                             {detail.company && <div><dt className="ui-t-faint">Empresa</dt><dd className="ui-t">{detail.company}</dd></div>}
                             {detail.email && <div><dt className="ui-t-faint">E-mail</dt><dd className="ui-t">{detail.email}</dd></div>}
-                            {detail.phone && <div><dt className="ui-t-faint">Telefone</dt><dd className="ui-t">{detail.phone}</dd></div>}
+                            {detail.phone && (
+                                <div>
+                                    <dt className="ui-t-faint">Telefone</dt>
+                                    <dd className="ui-t">
+                                        {detail.phone}
+                                        <a href={`https://wa.me/${detail.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                                           className="ml-2 text-[12px] ui-pos hover:underline">WhatsApp</a>
+                                    </dd>
+                                </div>
+                            )}
                             {detail.project_title && <div><dt className="ui-t-faint">Projeto</dt><dd className="ui-t">{detail.project_title}</dd></div>}
                         </dl>
 
