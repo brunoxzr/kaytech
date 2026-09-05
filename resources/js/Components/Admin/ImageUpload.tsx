@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Upload, X, Loader2, ClipboardPaste } from 'lucide-react';
 
 interface ImageUploadProps {
     label: string;
@@ -11,47 +11,103 @@ interface ImageUploadProps {
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({ label, value, onChange, folder, required }) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const dropRef = useRef<HTMLDivElement>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [dragOver, setDragOver] = useState(false);
+    const [pasteHint, setPasteHint] = useState(false);
 
-    const handleFile = async (file: File) => {
-        setUploading(true);
-        setError(null);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', folder);
-
-        try {
-            const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
-            const res = await fetch('/admin/upload', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken || '',
-                    Accept: 'application/json',
-                },
-                body: formData,
-                credentials: 'same-origin',
-            });
-
-            if (!res.ok) {
-                throw new Error('Falha no upload');
+    const handleFile = useCallback(
+        async (file: File) => {
+            if (!file.type.startsWith('image/')) {
+                setError('O arquivo precisa ser uma imagem.');
+                return;
             }
+            setUploading(true);
+            setError(null);
 
-            const data = await res.json();
-            onChange(data.path);
-        } catch {
-            setError('Não foi possível enviar a imagem. Tente novamente.');
-        } finally {
-            setUploading(false);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', folder);
+
+            try {
+                const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
+                const res = await fetch('/admin/upload', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken || '',
+                        Accept: 'application/json',
+                    },
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+
+                if (!res.ok) {
+                    throw new Error('Falha no upload');
+                }
+
+                const data = await res.json();
+                onChange(data.path);
+            } catch {
+                setError('Não foi possível enviar a imagem. Tente novamente.');
+            } finally {
+                setUploading(false);
+            }
+        },
+        [folder, onChange],
+    );
+
+    const fileFromClipboard = (items: DataTransferItemList | null): File | null => {
+        if (!items) return null;
+        for (const item of Array.from(items)) {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const f = item.getAsFile();
+                if (f) return f;
+            }
         }
+        return null;
+    };
+
+    const onPaste = (e: React.ClipboardEvent) => {
+        const file = fileFromClipboard(e.clipboardData?.items ?? null);
+        if (file) {
+            e.preventDefault();
+            handleFile(file);
+        }
+    };
+
+    // Enquanto o campo está vazio, Ctrl+V em qualquer lugar da tela envia a imagem
+    // (a menos que o foco esteja num input de texto/textarea).
+    useEffect(() => {
+        if (value) return;
+        const onDocPaste = (e: ClipboardEvent) => {
+            const el = document.activeElement;
+            const tag = el?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || (el as HTMLElement)?.isContentEditable) return;
+            const file = fileFromClipboard(e.clipboardData?.items ?? null);
+            if (file) {
+                e.preventDefault();
+                handleFile(file);
+            }
+        };
+        document.addEventListener('paste', onDocPaste);
+        return () => document.removeEventListener('paste', onDocPaste);
+    }, [value, handleFile]);
+
+    const onDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleFile(file);
     };
 
     return (
         <div>
-            <label className="block text-xs font-mono uppercase text-gray-400 mb-1">
-                {label} {required && <span className="text-red-400">*</span>}
-            </label>
+            {label ? (
+                <label className="block text-xs font-mono uppercase text-gray-400 mb-1">
+                    {label} {required && <span className="text-red-400">*</span>}
+                </label>
+            ) : null}
 
             <input
                 ref={inputRef}
@@ -88,21 +144,40 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ label, value, onChange
                     </div>
                 </div>
             ) : (
-                <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={uploading}
-                    className="w-full h-32 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/5 hover:border-white/25 transition flex flex-col items-center justify-center gap-2 text-gray-500 disabled:opacity-50"
+                <div
+                    ref={dropRef}
+                    tabIndex={0}
+                    onPaste={onPaste}
+                    onFocus={() => setPasteHint(true)}
+                    onBlur={() => setPasteHint(false)}
+                    onClick={() => { dropRef.current?.focus(); inputRef.current?.click(); }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={onDrop}
+                    className={`w-full min-h-32 rounded-xl border border-dashed transition flex flex-col items-center justify-center gap-2 text-gray-500 cursor-pointer outline-none px-3 py-4 ${
+                        dragOver
+                            ? 'border-white/40 bg-white/10'
+                            : pasteHint
+                              ? 'border-white/30 bg-white/5'
+                              : 'border-white/15 bg-white/[0.02] hover:bg-white/5 hover:border-white/25'
+                    } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
                 >
                     {uploading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                         <>
                             <Upload className="w-5 h-5" />
-                            <span className="text-xs">Clique para enviar uma imagem</span>
+                            <span className="text-xs text-center">
+                                Clique, arraste ou <strong className="text-gray-300">cole (Ctrl+V)</strong> uma imagem
+                            </span>
+                            {pasteHint && (
+                                <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                    <ClipboardPaste className="w-3 h-3" /> pronto para colar
+                                </span>
+                            )}
                         </>
                     )}
-                </button>
+                </div>
             )}
 
             {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
