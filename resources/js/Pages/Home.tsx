@@ -258,7 +258,7 @@ export default function Home({ trustedCompanies, projects, services, products, s
                                     prazo combinado e suporte depois do lançamento. Se eu não puder fazer bem, eu digo.
                                 </p>
                             </div>
-                            <a href="/brunokay"
+                            <a href="/brunokay/portfolio"
                                className="inline-block border-b-2 border-white pb-1 font-mono text-sm font-medium text-white">
                                 Ver meu portfólio completo →
                             </a>

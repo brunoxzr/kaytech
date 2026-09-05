@@ -17,12 +17,23 @@ class ProspectorController extends Controller
     {
         return Inertia::render('Admin/Prospector', [
             'existingNames' => Client::pluck('name')->map(fn ($n) => mb_strtolower($n))->values(),
+            // Nichos que mais convertem em landing page / site — priorizados no topo.
             'niches' => [
-                'Restaurante', 'Pizzaria', 'Padaria / confeitaria', 'Hamburgueria', 'Cafeteria',
-                'Barbearia', 'Salão de beleza', 'Estética', 'Academia', 'Estúdio de pilates',
-                'Clínica odontológica', 'Clínica médica', 'Petshop', 'Loja de roupas', 'Ótica',
-                'Oficina mecânica', 'Autopeças', 'Imobiliária', 'Escritório de advocacia',
-                'Escola de idiomas', 'Buffet / eventos',
+                'Dentista / clínica odontológica',
+                'Advogado / escritório de advocacia',
+                'Barbearia',
+                'Clínica de estética / harmonização facial',
+                'Nutricionista',
+                'Psicólogo / clínica de psicologia',
+                'Academia / studio de treino',
+                'Salão de beleza',
+                'Arquiteto / escritório de arquitetura',
+                'Imobiliária / corretor de imóveis',
+                'Pet shop / clínica veterinária',
+                'Fisioterapeuta / pilates',
+                'Contador / escritório de contabilidade',
+                'Oficina mecânica / funilaria',
+                'Restaurante',
             ],
         ]);
     }

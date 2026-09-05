@@ -69,7 +69,9 @@ Route::get('/projetos/{slug}', function ($slug) {
 
 // Standalone Bio-link Pages (no locale prefix)
 Route::get('/links', [LinkPageController::class, 'index'])->name('links');
-Route::get('/brunokay', [LinkPageController::class, 'brunokay'])->name('brunokay');
+// /brunokay → LINKTREE (bio-link). O portfólio completo fica em /brunokay/portfolio.
+Route::get('/brunokay', [LinkPageController::class, 'brunokayLinks'])->name('brunokay');
+Route::get('/brunokay/portfolio', [LinkPageController::class, 'brunokay'])->name('brunokay.portfolio');
 
 // KayTech Products (own products/sub-brands, e.g. KayVision) — standalone, no locale prefix
 Route::get('/produtos/{slug}', [ProductController::class, 'show'])->name('products.show');

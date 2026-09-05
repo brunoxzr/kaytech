@@ -131,7 +131,7 @@ export const FounderSection: React.FC = () => {
                             </button>
 
                             <Link
-                                href="/brunokay"
+                                href="/brunokay/portfolio"
                                 className="text-gray-500 hover:text-purple-400 font-medium text-sm transition flex items-center gap-2 group/profile"
                             >
                                 <span className="border-b border-transparent group-hover/profile:border-purple-400 transition-colors">
