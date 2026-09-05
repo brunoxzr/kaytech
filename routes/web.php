@@ -91,6 +91,10 @@ Route::post('/api/translate', [TranslationController::class, 'translate'])->midd
 Route::post('/api/prospect-bot', [\App\Http\Controllers\ProspectBotController::class, 'chat'])
     ->middleware('throttle:20,1')->name('api.prospect-bot');
 
+// Webhook da Evolution API (WhatsApp) — protegido por token no controller.
+Route::post('/webhooks/evolution', [\App\Http\Controllers\Admin\WhatsAppController::class, 'webhook'])
+    ->name('webhooks.evolution');
+
 // Admin Auth Routes (Blade views)
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('admin.login');
@@ -110,6 +114,14 @@ Route::prefix('admin')->group(function () {
 
         // Generic media upload (used by all admin image fields)
         Route::post('/upload', [MediaUploadController::class, 'store'])->name('admin.upload');
+
+        // WhatsApp (Evolution API / Baileys)
+        Route::get('/whatsapp', [\App\Http\Controllers\Admin\WhatsAppController::class, 'inbox'])->name('admin.wa.inbox');
+        Route::get('/whatsapp/conectar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'connect'])->name('admin.wa.connect');
+        Route::get('/whatsapp/conversas/{chat}', [\App\Http\Controllers\Admin\WhatsAppController::class, 'thread'])->name('admin.wa.thread');
+        Route::post('/whatsapp/conversas/{chat}/enviar', [\App\Http\Controllers\Admin\WhatsAppController::class, 'send'])->name('admin.wa.send');
+        Route::get('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcast'])->name('admin.wa.broadcast');
+        Route::post('/whatsapp/disparo', [\App\Http\Controllers\Admin\WhatsAppController::class, 'broadcastSend'])->name('admin.wa.broadcast.send');
 
         // Prospecção de leads (Gemini + Google Search)
         Route::get('/prospeccao', [\App\Http\Controllers\Admin\ProspectorController::class, 'index'])->name('admin.prospector.index');

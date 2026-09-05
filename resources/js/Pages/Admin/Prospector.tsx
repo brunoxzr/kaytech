@@ -12,7 +12,7 @@ interface Lead {
     maps_url: string; resumo: string;
 }
 interface Source { title: string | null; uri: string }
-interface Props { niches: string[]; existingNames: string[] }
+interface Props { niches: string[]; existingNames: string[]; states: string[] }
 
 const csrf = () => document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 const onlyDigits = (s: string) => s.replace(/\D/g, '');
@@ -24,9 +24,10 @@ const SITE_BADGE: Record<Lead['tem_site'], { label: string; tone: 'pos' | 'neg' 
     sim: { label: 'tem site', tone: 'neg' },
 };
 
-export default function Prospector({ niches, existingNames }: Props) {
+export default function Prospector({ niches, existingNames, states }: Props) {
     const known = React.useMemo(() => new Set(existingNames), [existingNames]);
     const [city, setCity] = React.useState('');
+    const [state, setState] = React.useState('');
     const [niche, setNiche] = React.useState(niches[0] ?? '');
     const [limit, setLimit] = React.useState(15);
     const [loading, setLoading] = React.useState(false);
@@ -39,7 +40,7 @@ export default function Prospector({ niches, existingNames }: Props) {
 
     const run = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!city.trim() || loading) return;
+        if ((!city.trim() && !state) || loading) return;
         setLoading(true);
         setNote(null);
         try {
@@ -47,7 +48,7 @@ export default function Prospector({ niches, existingNames }: Props) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' },
                 credentials: 'same-origin',
-                body: JSON.stringify({ city, niche, limit }),
+                body: JSON.stringify({ city, state, niche, limit }),
             });
             const data = await res.json();
             setLeads(data.leads ?? []);
@@ -67,7 +68,7 @@ export default function Prospector({ niches, existingNames }: Props) {
     );
 
     const saveClient = (l: Lead) => {
-        router.post('/admin/prospeccao/salvar', { ...l, niche, city }, {
+        router.post('/admin/prospeccao/salvar', { ...l, niche, city: city || state }, {
             preserveScroll: true,
             onSuccess: () => setSaved((s) => new Set(s).add(l.nome)),
         });
@@ -85,21 +86,27 @@ export default function Prospector({ niches, existingNames }: Props) {
         const url = URL.createObjectURL(new Blob(['﻿' + csvBody], { type: 'text/csv;charset=utf-8' }));
         const a = document.createElement('a');
         a.href = url;
-        a.download = `leads-${niche}-${city}.csv`.toLowerCase().replace(/\s+/g, '-');
+        a.download = `leads-${niche}-${city || state}.csv`.toLowerCase().replace(/\s+/g, '-');
         a.click();
         URL.revokeObjectURL(url);
     };
 
     return (
-        <AdminLayout title="Prospecção" subtitle="Encontre empresas do nicho na cidade — foco em quem não tem site">
+        <AdminLayout title="Prospecção" subtitle="Encontre empresas do nicho por cidade ou estado inteiro — foco em quem não tem site">
             <Head title="Prospecção — Admin KayTech" />
 
             <Panel>
                 <form onSubmit={run} className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
-                    <Field label="Cidade" className="sm:col-span-4">
-                        <Input required placeholder="Londrina - PR" value={city} onChange={(e) => setCity(e.target.value)} />
+                    <Field label="Cidade" className="sm:col-span-3">
+                        <Input placeholder="Londrina (vazio = estado todo)" value={city} onChange={(e) => setCity(e.target.value)} />
                     </Field>
-                    <Field label="Nicho" className="sm:col-span-4">
+                    <Field label="Estado" className="sm:col-span-2">
+                        <Select value={state} onChange={(e) => setState(e.target.value)}>
+                            <option value="">—</option>
+                            {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </Select>
+                    </Field>
+                    <Field label="Nicho" className="sm:col-span-3">
                         <Select value={niche} onChange={(e) => setNiche(e.target.value)}>
                             {niches.map((n) => <option key={n} value={n}>{n}</option>)}
                             <option value={niche && !niches.includes(niche) ? niche : '__custom'}>Outro…</option>
@@ -107,7 +114,7 @@ export default function Prospector({ niches, existingNames }: Props) {
                     </Field>
                     <Field label="Máx." className="sm:col-span-2">
                         <Select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
-                            {[10, 15, 20, 25].map((n) => <option key={n} value={n}>{n}</option>)}
+                            {[10, 15, 20, 25, 40, 60].map((n) => <option key={n} value={n}>{n}</option>)}
                         </Select>
                     </Field>
                     <div className="sm:col-span-2">

@@ -18,6 +18,16 @@ return [
         'places_actor' => env('APIFY_PLACES_ACTOR', 'compass~crawler-google-places'),
     ],
 
+    'evolution' => [
+        // Servidor da Evolution API (Baileys). Ex.: https://evo.seudominio.com
+        'base_url' => rtrim((string) env('EVOLUTION_BASE_URL', ''), '/'),
+        'api_key' => env('EVOLUTION_API_KEY'),
+        // Nome da instância criada na Evolution para o número do Bruno.
+        'instance' => env('EVOLUTION_INSTANCE', 'kaytech'),
+        // Token secreto que a Evolution enviará no header do webhook (opcional).
+        'webhook_token' => env('EVOLUTION_WEBHOOK_TOKEN'),
+    ],
+
 
     /*
     |--------------------------------------------------------------------------

@@ -166,6 +166,18 @@ class JarvisTools
                         'required' => ['cidade', 'nicho'],
                     ],
                 ],
+                [
+                    'name' => 'enviar_whatsapp',
+                    'description' => 'Envia uma mensagem de WhatsApp pelo número do Bruno (via Evolution API). Use só quando o senhor pedir explicitamente para mandar mensagem para alguém.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'numero' => ['type' => 'string', 'description' => 'Telefone com DDD, com ou sem +55'],
+                            'mensagem' => ['type' => 'string'],
+                        ],
+                        'required' => ['numero', 'mensagem'],
+                    ],
+                ],
             ],
         ]];
     }
@@ -187,6 +199,7 @@ class JarvisTools
             'mudar_status_cliente' => self::mudarStatusCliente($args),
             'anotar_cliente' => self::anotarCliente($args),
             'prospectar_leads' => self::prospectarLeads($args),
+            'enviar_whatsapp' => self::enviarWhatsapp($args),
             default => ['erro' => "Ferramenta desconhecida: {$name}"],
         };
     }
@@ -410,6 +423,36 @@ class JarvisTools
                 'leads' => $result['leads'],
                 'obs' => $result['note'] ?? 'Confirme telefone/Instagram antes de contatar. Veja a lista completa em /admin/prospeccao.',
             ];
+        } catch (\Throwable $e) {
+            return ['erro' => $e->getMessage()];
+        }
+    }
+
+    private static function enviarWhatsapp(array $args): array
+    {
+        $digits = preg_replace('/\D/', '', (string) ($args['numero'] ?? ''));
+        $msg = trim((string) ($args['mensagem'] ?? ''));
+        if (strlen($digits) < 10 || $msg === '') {
+            return ['erro' => 'Número ou mensagem inválidos.'];
+        }
+        if (strlen($digits) <= 11) {
+            $digits = '55' . $digits;
+        }
+
+        try {
+            $wamid = app(\App\Services\WhatsApp\EvolutionClient::class)->sendText($digits, $msg);
+
+            $jid = $digits . '@s.whatsapp.net';
+            $chat = \App\Models\WaChat::firstOrCreate(['remote_jid' => $jid], ['phone' => $digits, 'is_group' => false]);
+            $chat->messages()->create([
+                'wamid' => $wamid, 'from_me' => true, 'type' => 'text',
+                'body' => $msg, 'status' => 'sent', 'sent_at' => now(),
+            ]);
+            $chat->update(['last_message' => $msg, 'last_message_at' => now()]);
+
+            Log::info('[Jarvis] enviar_whatsapp', ['user' => auth()->id(), 'to' => $digits]);
+
+            return ['ok' => true, 'para' => $digits];
         } catch (\Throwable $e) {
             return ['erro' => $e->getMessage()];
         }

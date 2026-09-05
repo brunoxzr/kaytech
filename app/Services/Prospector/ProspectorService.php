@@ -19,20 +19,39 @@ class ProspectorService
     ];
 
     /**
+     * @param  string  $city   Cidade (opcional se $state for informado — aí busca no estado todo).
+     * @param  string  $state  UF, ex.: "PR" ou "Paraná" (opcional).
      * @return array{leads: array<int, array>, sources: array, note: ?string}
      */
-    public function search(string $city, string $niche, int $limit = 15): array
+    public function search(string $city, string $niche, int $limit = 15, string $state = ''): array
     {
         $token = (string) config('services.apify.token');
         if ($token === '') {
             throw new RuntimeException('APIFY_TOKEN não configurado no servidor.');
         }
 
-        $limit = max(3, min(60, $limit));
+        $city = trim($city);
+        $state = trim($state);
+        if ($niche === '' || ($city === '' && $state === '')) {
+            throw new RuntimeException('Informe o nicho e ao menos a cidade ou o estado.');
+        }
+
+        $limit = max(3, min(120, $limit));
         $actor = (string) config('services.apify.places_actor', 'compass~crawler-google-places');
 
+        $stateName = $this->stateName($state);
+
+        // Monta o termo de busca. Sem cidade => varre o estado inteiro.
+        if ($city !== '' && $stateName !== '') {
+            $where = "{$city}, {$stateName}";
+        } elseif ($city !== '') {
+            $where = $city;
+        } else {
+            $where = "estado {$stateName}";
+        }
+
         $input = [
-            'searchStringsArray' => ["{$niche} em {$city}"],
+            'searchStringsArray' => ["{$niche} em {$where}"],
             'maxCrawledPlacesPerSearch' => $limit,
             'language' => 'pt-BR',
             'countryCode' => 'br',
@@ -41,6 +60,11 @@ class ProspectorService
             'skipClosedPlaces' => true,
             'maximumLeadsEnrichmentRecords' => 0,
         ];
+
+        // Busca no estado inteiro: deixa o ator quebrar por cidades da UF.
+        if ($city === '' && $stateName !== '') {
+            $input['searchStringsArray'] = ["{$niche} em {$stateName}"];
+        }
 
         // run-sync: executa e devolve o dataset direto (bom p/ até ~1-2 min).
         $res = Http::timeout(180)->post(
@@ -55,11 +79,72 @@ class ProspectorService
         $items = $res->json() ?: [];
         $leads = $this->mapLeads($items);
 
+        // Se o usuário fixou o estado, descarta resultados de outra UF.
+        if ($stateName !== '' && $leads) {
+            $uf = $this->stateUf($state);
+            $needles = array_filter([$uf, $stateName]);
+            $leads = array_values(array_filter($leads, function ($l) use ($needles) {
+                $addr = mb_strtolower($l['endereco'] ?? '');
+                if ($addr === '') {
+                    return true; // sem endereço: não dá pra descartar
+                }
+                foreach ($needles as $n) {
+                    if (str_contains($addr, mb_strtolower($n))) {
+                        return true;
+                    }
+                }
+                return false;
+            }));
+        }
+
         return [
             'leads' => $leads,
             'sources' => [],
-            'note' => $leads ? null : 'Nenhum resultado. Tente outro termo de nicho ou uma cidade maior.',
+            'note' => $leads ? null : 'Nenhum resultado. Tente outro nicho, outra cidade ou remova o filtro de estado.',
         ];
+    }
+
+    private const STATES = [
+        'AC' => 'Acre', 'AL' => 'Alagoas', 'AP' => 'Amapá', 'AM' => 'Amazonas',
+        'BA' => 'Bahia', 'CE' => 'Ceará', 'DF' => 'Distrito Federal', 'ES' => 'Espírito Santo',
+        'GO' => 'Goiás', 'MA' => 'Maranhão', 'MT' => 'Mato Grosso', 'MS' => 'Mato Grosso do Sul',
+        'MG' => 'Minas Gerais', 'PA' => 'Pará', 'PB' => 'Paraíba', 'PR' => 'Paraná',
+        'PE' => 'Pernambuco', 'PI' => 'Piauí', 'RJ' => 'Rio de Janeiro', 'RN' => 'Rio Grande do Norte',
+        'RS' => 'Rio Grande do Sul', 'RO' => 'Rondônia', 'RR' => 'Roraima', 'SC' => 'Santa Catarina',
+        'SP' => 'São Paulo', 'SE' => 'Sergipe', 'TO' => 'Tocantins',
+    ];
+
+    /** Aceita "PR" ou "Paraná" e devolve o nome por extenso (ou ''). */
+    private function stateName(string $state): string
+    {
+        if ($state === '') {
+            return '';
+        }
+        $up = mb_strtoupper($state);
+        if (isset(self::STATES[$up])) {
+            return self::STATES[$up];
+        }
+        foreach (self::STATES as $name) {
+            if (mb_strtolower($name) === mb_strtolower($state)) {
+                return $name;
+            }
+        }
+        return $state; // texto livre
+    }
+
+    /** Devolve a sigla da UF a partir de "PR"/"Paraná" (ou ''). */
+    private function stateUf(string $state): string
+    {
+        $up = mb_strtoupper(trim($state));
+        if (isset(self::STATES[$up])) {
+            return $up;
+        }
+        foreach (self::STATES as $uf => $name) {
+            if (mb_strtolower($name) === mb_strtolower($state)) {
+                return $uf;
+            }
+        }
+        return '';
     }
 
     private function mapLeads(array $items): array

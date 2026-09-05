@@ -17,6 +17,10 @@ class ProspectorController extends Controller
     {
         return Inertia::render('Admin/Prospector', [
             'existingNames' => Client::pluck('name')->map(fn ($n) => mb_strtolower($n))->values(),
+            'states' => [
+                'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
+                'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+            ],
             // Nichos que mais convertem em landing page / site — priorizados no topo.
             'niches' => [
                 'Dentista / clínica odontológica',
@@ -42,14 +46,15 @@ class ProspectorController extends Controller
     {
         try {
             $city = trim((string) $request->input('city', ''));
+            $state = trim((string) $request->input('state', ''));
             $niche = trim((string) $request->input('niche', ''));
             $limit = (int) $request->input('limit', 15);
 
-            if ($city === '' || $niche === '') {
-                return response()->json(['leads' => [], 'sources' => [], 'note' => 'Informe cidade e nicho.'], 200);
+            if ($niche === '' || ($city === '' && $state === '')) {
+                return response()->json(['leads' => [], 'sources' => [], 'note' => 'Informe o nicho e ao menos a cidade ou o estado.'], 200);
             }
 
-            $result = (new ProspectorService())->search($city, $niche, $limit);
+            $result = (new ProspectorService())->search($city, $niche, $limit, $state);
 
             return response()->json($result);
         } catch (\Throwable $e) {
